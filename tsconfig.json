@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "declaration": true /* Generates corresponding '.d.ts' file. */,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "declarationDir": "./dist/types",
+    "outDir": "./dist/src",
+    "rootDir": "./src" /* Redirect output structure to the directory. */,
+    "composite": true /* Enable project compilation */,
+    "strict": true /* Enable all strict type-checking options. */,
+    "strictPropertyInitialization": false,
+    "lib": ["es2017", "dom"]
+  },
+  "module": "commonjs",
+
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}
