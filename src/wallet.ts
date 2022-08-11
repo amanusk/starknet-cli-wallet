@@ -3,35 +3,26 @@ import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey } from 
 import { program } from "commander";
 import { Wallet, providers, utils, BigNumber } from "ethers";
 import BN from "bn.js";
-import {
-  Contract,
-  defaultProvider,
-  ec,
-  json,
-  stark,
-  Signer,
-  KeyPair,
-  Account,
-  Provider,
-  number,
-  uint256,
-  constants,
-} from "starknet";
+import { Contract, ec, json, stark, Signer, KeyPair, Account, Provider, number, uint256, constants } from "starknet";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-// TODO: Use the path to generate the private key
-const PATH = "m/44'/60'/0'/0/0";
+import { baseDerivationPath } from "./keyDerivation";
+let PATH = baseDerivationPath;
 
-let baseUrl = "https://alpha4.starknet.io";
+// let baseUrl = "https://alpha4.starknet.io";
+let baseUrl = "http://127.0.0.1:5050";
 
 const provider = new Provider({
+  //sequencer: { network: "goerli-alpha" },
+  // sequencer: { network: "mainnet-alpha" },
   sequencer: {
     baseUrl: `${baseUrl}`,
-    chainId: constants.StarknetChainId.TESTNET,
+    chainId: constants.StarknetChainId.TESTNET, // same for devnet
     feederGatewayUrl: `${baseUrl}/feeder_gateway`,
     gatewayUrl: `${baseUrl}/gateway`,
   },
+  // rpc: { nodeUrl: baseUrl },
 });
 
 async function getWallet(path: string): Promise<Account> {
@@ -56,7 +47,7 @@ program.command("balance [address] [token_address]").action(async (address: stri
   }
   // const compiledErc20 = json.parse(fs.readFileSync("./src/interfaces/ERC20.cairo/ERC20.json").toString("ascii"));
   const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
-  const erc20 = new Contract(erc20ABI, tokenAddress);
+  const erc20 = new Contract(erc20ABI, tokenAddress, provider);
   const balance = await erc20.balanceOf(address);
   // console.log(balance.balance);
   let balanceBigNumber = uint256ToBigNumber(balance.balance);

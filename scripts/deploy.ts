@@ -1,7 +1,21 @@
 import fs from "fs";
-import { Contract, defaultProvider, ec, json, stark } from "starknet";
+import { Contract, defaultProvider, ec, json, stark, constants, Provider } from "starknet";
 console.log("Reading OZ Account Contract...");
-const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/OZAccount.json").toString("ascii"));
+const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
+
+let testnetURL = "https://alpha4.starknet.io";
+let mainnetURL = " https://alpha-mainnet.starknet.io";
+
+let baseUrl = mainnetURL;
+
+const provider = new Provider({
+  sequencer: {
+    baseUrl: `${baseUrl}`,
+    chainId: constants.StarknetChainId.MAINNET,
+    feederGatewayUrl: `${baseUrl}/feeder_gateway`,
+    gatewayUrl: `${baseUrl}/gateway`,
+  },
+});
 
 async function main() {
   // Generate public and private key pair.
@@ -15,7 +29,7 @@ async function main() {
 
   // Deploy the Account contract and wait for it to be verified on StarkNet.
   console.log("Deployment Tx - Account Contract to StarkNet...");
-  const accountResponse = await defaultProvider.deployContract({
+  const accountResponse = await provider.deployContract({
     contract: compiledOZAccount,
     constructorCalldata: [starkKeyPub],
     addressSalt: starkKeyPub,
@@ -24,7 +38,7 @@ async function main() {
   console.log(
     "Waiting for Tx " + accountResponse.transaction_hash + " to be Accepted on Starknet - OZ Account Deployment...",
   );
-  await defaultProvider.waitForTransaction(accountResponse.transaction_hash);
+  await provider.waitForTransaction(accountResponse.transaction_hash);
   console.log("✨ Account Deployed at " + accountResponse.contract_address + " !!");
   //Ready to be used !!!
   console.log(`PRIVATE_KEY=${privateKey}`);
