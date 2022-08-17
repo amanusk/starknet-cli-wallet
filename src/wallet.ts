@@ -11,17 +11,17 @@ import { baseDerivationPath } from "./keyDerivation";
 let PATH = baseDerivationPath;
 
 // let baseUrl = "https://alpha4.starknet.io";
-let baseUrl = "http://127.0.0.1:5050";
+// let baseUrl = "http://127.0.0.1:5050";
 
 const provider = new Provider({
-  //sequencer: { network: "goerli-alpha" },
+  sequencer: { network: "goerli-alpha" },
   // sequencer: { network: "mainnet-alpha" },
-  sequencer: {
-    baseUrl: `${baseUrl}`,
-    chainId: constants.StarknetChainId.TESTNET, // same for devnet
-    feederGatewayUrl: `${baseUrl}/feeder_gateway`,
-    gatewayUrl: `${baseUrl}/gateway`,
-  },
+  // sequencer: {
+  //   baseUrl: `${baseUrl}`,
+  //   chainId: constants.StarknetChainId.TESTNET, // same for devnet
+  //   feederGatewayUrl: `${baseUrl}/feeder_gateway`,
+  //   gatewayUrl: `${baseUrl}/gateway`,
+  // },
   // rpc: { nodeUrl: baseUrl },
 });
 
