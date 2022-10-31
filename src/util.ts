@@ -33,13 +33,6 @@ export function uint256ToBigNumber(uint256: Uint256) {
 
 // function to convert BN to Uint256
 export function bigNumberToUint256(bignumber: BigNumber): Uint256 {
-  // TODO TODO :make sure it works
-  // const bn = toBN(bignumber);
-  //if (!isUint256(bn)) throw new Error("Number is too large");
-  // return {
-  //   low: addHexPrefix(bn.maskn(128).toString(16)),
-  //   high: addHexPrefix(bn.shrn(128).toString(16)),
-  // };
   return {
     low: new BN(bignumber.mask(128).toHexString()),
     high: new BN(bignumber.shr(128).toHexString()),
