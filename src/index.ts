@@ -61,7 +61,7 @@ program.command("generate_pk").action(async options => {
 
 program.command("address").action(async options => {
   let account = await StarkNetWallet.getAccount();
-  console.log(`Account address: ${account.address})`);
+  console.log(`Account address: ${account.address}`);
 });
 
 program.parse(process.argv);

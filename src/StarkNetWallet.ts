@@ -2,16 +2,30 @@ import fs from "fs";
 import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey } from "./util";
 import { Wallet, BigNumber } from "ethers";
 import BN from "bn.js";
-import { Contract, ec, json, stark, Signer, KeyPair, Account, Provider, number, uint256, constants } from "starknet";
+import {
+  Contract,
+  ec,
+  json,
+  stark,
+  Signer,
+  KeyPair,
+  Account,
+  Provider,
+  number,
+  uint256,
+  constants,
+  hash,
+} from "starknet";
 
-import { FeederProvider } from "./ProviderConfig";
+import { FeederProvider, StarkNetProvider } from "./ProviderConfig";
 import { getStarkPair } from "./keyDerivation";
 
 import * as dotenv from "dotenv";
 dotenv.config();
 
 function getProvider() {
-  return new FeederProvider("http://127.0.0.1:5050");
+  //return new FeederProvider("http://127.0.0.1:5050");
+  return new StarkNetProvider("goerli-alpha");
 }
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
@@ -20,15 +34,17 @@ const MNEMONIC = process.env.MNEMONIC || "";
 export class StarkNetWallet {
   static getAccount(index: number = 0): Account {
     let address = ensureEnvVar("ACCOUNT_ADDRESS");
-    if (PRIVATE_KEY != null) {
+
+    if (PRIVATE_KEY != "") {
       return StarkNetWallet.getAccountFromPk(address, PRIVATE_KEY);
-    } else if (MNEMONIC != null) {
+    } else if (MNEMONIC != "") {
       return StarkNetWallet.getAccountFromMnemonic(address, MNEMONIC, index);
     }
     throw new Error("You must specify either PRIVATE_KEY or MNEMONIC");
   }
 
   static getAccountFromPk(address: string, pk: string): Account {
+    console.log("Getting Account from Pk");
     let provider = getProvider();
     const starkKeyPair = ec.getKeyPair(pk);
     let account = new Account(provider, address, starkKeyPair);
@@ -36,8 +52,11 @@ export class StarkNetWallet {
   }
 
   static getAccountFromMnemonic(address: string, mnemonic: string, index: number = 0): Account {
+    console.log("Getting Account from Mnemonic");
     let provider = getProvider();
     const starkKeyPair = getStarkPair(mnemonic, index);
+    let starkKeyPub = ec.getStarkKey(starkKeyPair);
+    console.log("PubKey", starkKeyPub);
     let account = new Account(provider, address, starkKeyPair);
     return account;
   }
@@ -64,11 +83,18 @@ export class StarkNetWallet {
     console.log("Deployment Tx - Account Contract to StarkNet...");
     const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
 
+    // TODO: calculate this
+    let classHash = "0x750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062";
+
     let mnemonic = StarkNetWallet.generateSeed();
 
     let starkKeyPair = getStarkPair(mnemonic, 0);
 
     let starkKeyPub = ec.getStarkKey(starkKeyPair);
+
+    let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, classHash, [starkKeyPub], 0);
+
+    console.log("Future Account Address", futureAccountAddress);
 
     let provider = getProvider();
     // TODO: replace with declare/deploy + print future address
