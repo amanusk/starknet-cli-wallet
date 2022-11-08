@@ -1,4 +1,5 @@
-import { BigNumber, BigNumberish, constants } from "ethers";
+import { BigNumber, BigNumberish, constants, utils } from "ethers";
+import { EstimateFee } from "starknet";
 import BN from "bn.js";
 
 export function ensureEnvVar(varName: string): string {
@@ -46,4 +47,17 @@ export function generateRandomStarkPrivateKey(length = 63) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return BigNumber.from(result);
+}
+
+export function prettyPrintFee(fee: EstimateFee) {
+  console.log(`Overall Fee: ${utils.formatEther(fee.overall_fee.toString())}`);
+  if (fee.gas_consumed !== undefined) {
+    console.log(`Gas Consumed: ${fee.gas_consumed.toString()}`);
+  }
+  if (fee.gas_price !== undefined) {
+    console.log(`Gas Price: ${utils.formatUnits(fee.gas_price.toString(), 9)}`);
+  }
+  if (fee.suggestedMaxFee !== undefined) {
+    console.log(`Suggested Max Fee: ${utils.formatEther(fee.suggestedMaxFee.toString())}`);
+  }
 }

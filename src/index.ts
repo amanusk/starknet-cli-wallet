@@ -23,8 +23,15 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const MNEMONIC = process.env.MNEMONIC || "";
 
 program.command("balance [address] [token_address]").action(async (address: string, tokenAddress: string, options) => {
-  let balanceBigNumber = await StarkNetWallet.getBalance(address, tokenAddress);
-  console.log(utils.formatEther(balanceBigNumber));
+  if (address != "") {
+    let wallet = new StarkNetWallet(MNEMONIC);
+    let balanceBigNumber = await wallet.getBalance(tokenAddress);
+    console.log(`Address ${wallet.getAddress()}`);
+    console.log(`Balance ${utils.formatEther(balanceBigNumber)}`);
+  } else {
+    let balanceBigNumber = await StarkNetWallet.getBalance(address, tokenAddress);
+    console.log(utils.formatEther(balanceBigNumber));
+  }
 });
 
 program
@@ -47,7 +54,7 @@ program
     if (tokenAddress == null) {
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
     }
-    let starknetWallet = new StarkNetWallet();
+    let starknetWallet = new StarkNetWallet(MNEMONIC);
     await starknetWallet.transfer(recipientAddress, utils.parseUnits(amount, decimals));
   });
 
@@ -60,8 +67,8 @@ program.command("generate_pk").action(async options => {
 });
 
 program.command("address").action(async options => {
-  let account = await StarkNetWallet.getAccount();
-  console.log(`Account address: ${account.address}`);
+  let wallet = new StarkNetWallet(MNEMONIC);
+  console.log(`Account address: ${wallet.getAddress()}`);
 });
 
 program.parse(process.argv);

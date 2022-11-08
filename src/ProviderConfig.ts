@@ -1,6 +1,6 @@
 import { Provider, constants } from "starknet";
 
-type NetworkPreset = "goerli-alpha" | "mainnet-alpha";
+export type NetworkPreset = "goerli-alpha" | "mainnet-alpha";
 
 export class RPCProvider extends Provider {
   constructor(baseUrl: string) {
