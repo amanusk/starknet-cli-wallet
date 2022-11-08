@@ -92,12 +92,10 @@ export class StarkNetWallet {
     return balanceBigNumber;
   }
 
-  static async deployNewAccount(provider: Provider): Promise<Account> {
+  static async deployNewAccount(mnemonic: string, provider: Provider): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
     const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
-
-    let mnemonic = StarkNetWallet.generateSeed();
 
     let starkKeyPair = getStarkPair(mnemonic, 0);
 
@@ -136,15 +134,16 @@ export class StarkNetWallet {
 
     let starkKeyPub = ec.getStarkKey(starkKeyPair);
 
-    // let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
+    let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
 
-    // console.log("Future Account Address", futureAccountAddress);
+    console.log("Future Account Address", futureAccountAddress);
 
     let futureAccount = new Account(provider, futureAccountAddress, starkKeyPair);
     let accountResponse = await futureAccount.deployAccount({
       classHash: ACCOUNT_CLASS_HASH,
       constructorCalldata: [starkKeyPub],
       addressSalt: starkKeyPub,
+      contractAddress: futureAccountAddress,
     });
 
     // Wait for the deployment transaction to be accepted on StarkNet
