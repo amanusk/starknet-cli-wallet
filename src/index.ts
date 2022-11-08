@@ -4,8 +4,7 @@ import { program } from "commander";
 import { Wallet, providers, utils, BigNumber } from "ethers";
 import BN from "bn.js";
 import { Contract, ec, json, stark, Signer, KeyPair, Account, Provider, number, uint256, constants } from "starknet";
-
-import { FeederProvider } from "./ProviderConfig";
+import { FeederProvider, StarkNetProvider, NetworkPreset } from "./ProviderConfig";
 
 import { StarkNetWallet } from "./StarkNetWallet";
 
@@ -15,22 +14,58 @@ dotenv.config();
 import { baseDerivationPath, getStarkPair } from "./keyDerivation";
 let PATH = baseDerivationPath;
 
-function getProvider() {
-  return new FeederProvider("http://127.0.0.1:5050");
-}
-
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const MNEMONIC = process.env.MNEMONIC || "";
+const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
+
+// Load config
+const NETWORK = process.env.NETWORK || "";
+const RPC_URL = process.env.RPC_URL || "";
+
+function getNetworkConfig(): NetworkPreset {
+  if (NETWORK == "mainnet" || NETWORK == "mainnet-alpha") {
+    return "mainnet-alpha";
+  } else {
+    return "goerli-alpha";
+  }
+}
+
+function getProvider() {
+  let rpcUrl = "http://localhost:5050";
+  if (NETWORK == "devnet") {
+    if (RPC_URL != "") {
+      rpcUrl = RPC_URL;
+    }
+    console.log(`Using DEVNET with URL ${rpcUrl}`);
+    return new FeederProvider(rpcUrl);
+  }
+  let network = getNetworkConfig();
+  return new StarkNetProvider(network);
+}
+
+function getWalletFromConfig(): StarkNetWallet {
+  let provider = getProvider();
+  if (PRIVATE_KEY != "") {
+    return new StarkNetWallet(PRIVATE_KEY, provider, ACCOUNT_ADDRESS);
+  } else if (MNEMONIC != "") {
+    return StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider, ACCOUNT_ADDRESS);
+  } else {
+    let mnemonic = StarkNetWallet.generateSeed();
+    return StarkNetWallet.fromMnemonic(mnemonic, 0, provider);
+  }
+}
 
 program.command("balance [address] [token_address]").action(async (address: string, tokenAddress: string, options) => {
-  if (address != "") {
-    let wallet = new StarkNetWallet(MNEMONIC);
+  let provider = getProvider();
+  if (address == undefined) {
+    let wallet = getWalletFromConfig();
     let balanceBigNumber = await wallet.getBalance(tokenAddress);
     console.log(`Address ${wallet.getAddress()}`);
     console.log(`Balance ${utils.formatEther(balanceBigNumber)}`);
   } else {
-    let balanceBigNumber = await StarkNetWallet.getBalance(address, tokenAddress);
-    console.log(utils.formatEther(balanceBigNumber));
+    let balanceBigNumber = await StarkNetWallet.getBalance(address, provider, tokenAddress);
+    console.log(`Address ${address}`);
+    console.log(`Balance ${utils.formatEther(balanceBigNumber)}`);
   }
 });
 
@@ -54,8 +89,8 @@ program
     if (tokenAddress == null) {
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
     }
-    let starknetWallet = new StarkNetWallet(MNEMONIC);
-    await starknetWallet.transfer(recipientAddress, utils.parseUnits(amount, decimals));
+    let wallet = getWalletFromConfig();
+    await wallet.transfer(recipientAddress, utils.parseUnits(amount, decimals));
   });
 
 program.command("generate_seed").action(async options => {
@@ -67,7 +102,7 @@ program.command("generate_pk").action(async options => {
 });
 
 program.command("address").action(async options => {
-  let wallet = new StarkNetWallet(MNEMONIC);
+  let wallet = getWalletFromConfig();
   console.log(`Account address: ${wallet.getAddress()}`);
 });
 

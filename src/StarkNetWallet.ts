@@ -26,37 +26,16 @@ dotenv.config();
 // TODO: calculate this
 const ACCOUNT_CLASS_HASH = "0x750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062";
 
-// Load config
-const NETWORK = process.env.NETWORK || "";
-const RPC_URL = process.env.RPC_URL || "";
-
-function getNetworkConfig(): NetworkPreset {
-  if (NETWORK == "mainnet" || NETWORK == "mainnet-alpha") {
-    return "mainnet-alpha";
-  } else {
-    return "goerli-alpha";
-  }
-}
-
-function getProvider() {
-  let rpcUrl = "http://localhost:5050";
-  if (NETWORK == "devnet") {
-    if (RPC_URL != "") {
-      rpcUrl = RPC_URL;
-    }
-    console.log(`Using DEVNET with URL ${rpcUrl}`);
-    return new FeederProvider(rpcUrl);
-  }
-  let network = getNetworkConfig();
-  return new StarkNetProvider(network);
-}
-
 export class StarkNetWallet {
   private account: Account;
+  public provider: Provider;
 
-  constructor(mnemonic: string, index: number = 0) {
-    let address = StarkNetWallet.computeAddress(mnemonic, index);
-    this.account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index);
+  constructor(privateKey: string, provider: Provider, address?: string) {
+    this.provider = provider;
+    if (address == undefined) {
+      address = StarkNetWallet.computeAddressFromPk(privateKey);
+    }
+    this.account = StarkNetWallet.getAccountFromPk(address, privateKey, this.provider);
     return;
   }
 
@@ -64,35 +43,45 @@ export class StarkNetWallet {
     return this.account.address;
   }
 
-  static computeAddress(mnemonic: string, index = 0): string {
+  static computeAddressFromMnemonic(mnemonic: string, index = 0): string {
     const starkKeyPair = getStarkPair(mnemonic, index);
     let starkKeyPub = ec.getStarkKey(starkKeyPair);
     return hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
   }
 
-  static getAccountFromPk(address: string, pk: string): Account {
-    console.log("Getting Account from Pk");
-    let provider = getProvider();
+  static computeAddressFromPk(pk: string): string {
+    const starkKeyPair = ec.getKeyPair(pk);
+    let starkKeyPub = ec.getStarkKey(starkKeyPair);
+    return hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
+  }
+
+  static getAccountFromPk(address: string, pk: string, provider: Provider): Account {
     const starkKeyPair = ec.getKeyPair(pk);
     let account = new Account(provider, address, starkKeyPair);
     return account;
   }
 
-  static getAccountFromMnemonic(address: string, mnemonic: string, index: number = 0): Account {
-    console.log("Getting Account from Mnemonic");
-    let provider = getProvider();
+  static fromMnemonic(mnemonic: string, index: number = 0, provider: Provider, address?: string): StarkNetWallet {
+    if (address == undefined) {
+      address = StarkNetWallet.computeAddressFromMnemonic(mnemonic, index);
+    }
+    let newWallet = new StarkNetWallet("0x01", provider);
+    let account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index, newWallet.provider);
+    newWallet.account = account;
+    return newWallet;
+  }
+
+  static getAccountFromMnemonic(address: string, mnemonic: string, index: number = 0, provider: Provider): Account {
     const starkKeyPair = getStarkPair(mnemonic, index);
-    let starkKeyPub = ec.getStarkKey(starkKeyPair);
     let account = new Account(provider, address, starkKeyPair);
     return account;
   }
 
   async getBalance(tokenAddress?: string) {
-    return StarkNetWallet.getBalance(this.account.address, tokenAddress);
+    return StarkNetWallet.getBalance(this.account.address, this.provider, tokenAddress);
   }
 
-  static async getBalance(address: string, tokenAddress?: string): Promise<BigNumber> {
-    let provider = getProvider();
+  static async getBalance(address: string, provider: Provider, tokenAddress?: string): Promise<BigNumber> {
     if (tokenAddress == null) {
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS"); // todo: move to config per chain
     }
@@ -103,7 +92,7 @@ export class StarkNetWallet {
     return balanceBigNumber;
   }
 
-  static async deployNewAccount(): Promise<Account> {
+  static async deployNewAccount(provider: Provider): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
     const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
@@ -118,7 +107,6 @@ export class StarkNetWallet {
 
     console.log("Future Account Address", futureAccountAddress);
 
-    let provider = getProvider();
     // TODO: replace with declare/deploy + print future address
     const accountResponse = await provider.deployContract({
       contract: compiledOZAccount,
@@ -139,7 +127,7 @@ export class StarkNetWallet {
     return account;
   }
 
-  static async deployPrefundedAccount(address: string, mnemonic: string): Promise<Account> {
+  static async deployPrefundedAccount(address: string, mnemonic: string, provider: Provider): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
     const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
@@ -148,17 +136,15 @@ export class StarkNetWallet {
 
     let starkKeyPub = ec.getStarkKey(starkKeyPair);
 
-    let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
+    // let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
 
-    console.log("Future Account Address", futureAccountAddress);
+    // console.log("Future Account Address", futureAccountAddress);
 
-    let provider = getProvider();
     let futureAccount = new Account(provider, futureAccountAddress, starkKeyPair);
     let accountResponse = await futureAccount.deployAccount({
       classHash: ACCOUNT_CLASS_HASH,
       constructorCalldata: [starkKeyPub],
       addressSalt: starkKeyPub,
-      contractAddress: futureAccountAddress,
     });
 
     // Wait for the deployment transaction to be accepted on StarkNet
@@ -184,8 +170,6 @@ export class StarkNetWallet {
   }
 
   async transfer(recipientAddress: string, amount: BigNumber, tokenAddress?: string, decimals: number = 18) {
-    let provider = await getProvider();
-
     if (tokenAddress == null) {
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
     }
@@ -214,7 +198,7 @@ export class StarkNetWallet {
       { maxFee: estimateFee.suggestedMaxFee },
     );
     console.log("Awaiting tx ", transferTxHash);
-    await provider.waitForTransaction(transferTxHash);
+    await this.provider.waitForTransaction(transferTxHash);
     console.log("Tx mined ", transferTxHash);
   }
 }
