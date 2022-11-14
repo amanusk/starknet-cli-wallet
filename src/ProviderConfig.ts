@@ -1,32 +1,29 @@
-import { Provider, constants } from "starknet";
+import { SequencerProvider, ProviderInterface } from "starknet";
 
-export type NetworkPreset = "goerli-alpha" | "mainnet-alpha";
+const NETWORK = process.env.NETWORK || "";
+const RPC_URL = process.env.RPC_URL || "";
 
-export class RPCProvider extends Provider {
-  constructor(baseUrl: string) {
-    super({ rpc: { nodeUrl: baseUrl } });
+export type NetworkName = "goerli-alpha" | "mainnet-alpha";
+
+function getNetworkConfig(): NetworkName {
+  if (NETWORK == "mainnet" || NETWORK == "mainnet-alpha") {
+    return "mainnet-alpha";
+  } else {
+    return "goerli-alpha";
   }
 }
 
-export class FeederProvider extends Provider {
-  constructor(baseUrl: string, chainId: constants.StarknetChainId = constants.StarknetChainId.TESTNET, uuid?: string) {
-    super({
-      sequencer: {
-        baseUrl: `${baseUrl}`,
-        chainId: chainId, // same for devnet
-        feederGatewayUrl: `${baseUrl}/feeder_gateway`,
-        gatewayUrl: `${baseUrl}/gateway`,
-        // TODO: Update to latest version with uuid
-        // headers: {
-        //   Authorization: `Basic ${Buffer.from(uuid + ":").toString("base64")}`,
-        // },
-      },
+export function getProvider(): ProviderInterface {
+  let baseUrl = "http://localhost:5050";
+  if (NETWORK == "devnet") {
+    if (RPC_URL != "") {
+      baseUrl = RPC_URL;
+    }
+    console.log(`Using DEVNET with URL ${baseUrl}`);
+    return new SequencerProvider({
+      baseUrl: `${baseUrl}`,
     });
   }
-}
-
-export class StarkNetProvider extends Provider {
-  constructor(network: NetworkPreset) {
-    super({ sequencer: { network: network } });
-  }
+  let network = getNetworkConfig();
+  return new SequencerProvider({ network: network });
 }

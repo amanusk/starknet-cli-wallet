@@ -1,47 +1,16 @@
-import fs from "fs";
-import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey } from "./util";
+import { ensureEnvVar } from "./util";
 import { program } from "commander";
-import { Wallet, providers, utils, BigNumber } from "ethers";
-import BN from "bn.js";
-import { Contract, ec, json, stark, Signer, KeyPair, Account, Provider, number, uint256, constants } from "starknet";
-import { FeederProvider, StarkNetProvider, NetworkPreset } from "./ProviderConfig";
+import { utils } from "ethers";
+import { getProvider } from "./ProviderConfig";
 
 import { StarkNetWallet } from "./StarkNetWallet";
 
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { baseDerivationPath, getStarkPair } from "./keyDerivation";
-let PATH = baseDerivationPath;
-
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const MNEMONIC = process.env.MNEMONIC || "";
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
-
-// Load config
-const NETWORK = process.env.NETWORK || "";
-const RPC_URL = process.env.RPC_URL || "";
-
-function getNetworkConfig(): NetworkPreset {
-  if (NETWORK == "mainnet" || NETWORK == "mainnet-alpha") {
-    return "mainnet-alpha";
-  } else {
-    return "goerli-alpha";
-  }
-}
-
-function getProvider() {
-  let rpcUrl = "http://localhost:5050";
-  if (NETWORK == "devnet") {
-    if (RPC_URL != "") {
-      rpcUrl = RPC_URL;
-    }
-    console.log(`Using DEVNET with URL ${rpcUrl}`);
-    return new FeederProvider(rpcUrl);
-  }
-  let network = getNetworkConfig();
-  return new StarkNetProvider(network);
-}
 
 function getWalletFromConfig(): StarkNetWallet {
   let provider = getProvider();
@@ -74,8 +43,6 @@ program
   .option("-t --token <tokenAddress>")
   .option("-d --decimals <decimals>")
   .action(async (recipientAddress: string, amount: string, options) => {
-    let provider = await getProvider();
-
     if (recipientAddress == null) {
       console.warn("Must specify a destination address to trasnfer to");
     }

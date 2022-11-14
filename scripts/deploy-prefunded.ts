@@ -1,10 +1,6 @@
 import { StarkNetWallet } from "../src/StarkNetWallet";
-import { FeederProvider } from "../src/ProviderConfig";
+import { getProvider } from "../src/ProviderConfig";
 import { utils } from "ethers";
-
-function getProvider() {
-  return new FeederProvider("http://127.0.0.1:5050");
-}
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;

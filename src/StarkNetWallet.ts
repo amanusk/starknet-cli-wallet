@@ -2,22 +2,8 @@ import fs from "fs";
 import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { Wallet, BigNumber } from "ethers";
 import BN from "bn.js";
-import {
-  Contract,
-  ec,
-  json,
-  stark,
-  Signer,
-  KeyPair,
-  Account,
-  Provider,
-  number,
-  uint256,
-  constants,
-  hash,
-} from "starknet";
+import { Contract, ec, json, Account, Provider, uint256, hash, ProviderInterface } from "starknet";
 
-import { FeederProvider, StarkNetProvider, NetworkPreset } from "./ProviderConfig";
 import { getStarkPair } from "./keyDerivation";
 
 import * as dotenv from "dotenv";
@@ -28,9 +14,9 @@ const ACCOUNT_CLASS_HASH = "0x750cd490a7cd1572411169eaa8be292325990d33c5d4733655
 
 export class StarkNetWallet {
   private account: Account;
-  public provider: Provider;
+  public provider: ProviderInterface;
 
-  constructor(privateKey: string, provider: Provider, address?: string) {
+  constructor(privateKey: string, provider: ProviderInterface, address?: string) {
     this.provider = provider;
     if (address == undefined) {
       address = StarkNetWallet.computeAddressFromPk(privateKey);
@@ -55,13 +41,18 @@ export class StarkNetWallet {
     return hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
   }
 
-  static getAccountFromPk(address: string, pk: string, provider: Provider): Account {
+  static getAccountFromPk(address: string, pk: string, provider: ProviderInterface): Account {
     const starkKeyPair = ec.getKeyPair(pk);
     let account = new Account(provider, address, starkKeyPair);
     return account;
   }
 
-  static fromMnemonic(mnemonic: string, index: number = 0, provider: Provider, address?: string): StarkNetWallet {
+  static fromMnemonic(
+    mnemonic: string,
+    index: number = 0,
+    provider: ProviderInterface,
+    address?: string,
+  ): StarkNetWallet {
     if (address == undefined) {
       address = StarkNetWallet.computeAddressFromMnemonic(mnemonic, index);
     }
@@ -71,7 +62,12 @@ export class StarkNetWallet {
     return newWallet;
   }
 
-  static getAccountFromMnemonic(address: string, mnemonic: string, index: number = 0, provider: Provider): Account {
+  static getAccountFromMnemonic(
+    address: string,
+    mnemonic: string,
+    index: number = 0,
+    provider: ProviderInterface,
+  ): Account {
     const starkKeyPair = getStarkPair(mnemonic, index);
     let account = new Account(provider, address, starkKeyPair);
     return account;
@@ -81,7 +77,7 @@ export class StarkNetWallet {
     return StarkNetWallet.getBalance(this.account.address, this.provider, tokenAddress);
   }
 
-  static async getBalance(address: string, provider: Provider, tokenAddress?: string): Promise<BigNumber> {
+  static async getBalance(address: string, provider: ProviderInterface, tokenAddress?: string): Promise<BigNumber> {
     if (tokenAddress == null) {
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS"); // todo: move to config per chain
     }
@@ -92,7 +88,7 @@ export class StarkNetWallet {
     return balanceBigNumber;
   }
 
-  static async deployNewAccount(mnemonic: string, provider: Provider): Promise<Account> {
+  static async deployNewAccount(mnemonic: string, provider: ProviderInterface): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
     const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
@@ -125,7 +121,11 @@ export class StarkNetWallet {
     return account;
   }
 
-  static async deployPrefundedAccount(address: string, mnemonic: string, provider: Provider): Promise<Account> {
+  static async deployPrefundedAccount(
+    address: string,
+    mnemonic: string,
+    provider: ProviderInterface,
+  ): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
     const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));

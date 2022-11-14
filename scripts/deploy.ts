@@ -1,9 +1,5 @@
 import { StarkNetWallet } from "../src/StarkNetWallet";
-import { FeederProvider } from "../src/ProviderConfig";
-
-function getProvider() {
-  return new FeederProvider("http://127.0.0.1:5050");
-}
+import { getProvider } from "../src/ProviderConfig";
 
 async function main() {
   let provider = getProvider();
