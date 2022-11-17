@@ -10,7 +10,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 // TODO: calculate this
-const ACCOUNT_CLASS_HASH = "0x750cd490a7cd1572411169eaa8be292325990d33c5d4733655fe6b926985062";
+const ACCOUNT_CLASS_HASH = "0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f";
 
 export class StarkNetWallet {
   private account: Account;
