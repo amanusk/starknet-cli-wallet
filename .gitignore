@@ -9,3 +9,5 @@ yarn.lock
 
 node.json
 yarn-error.log
+
+venv

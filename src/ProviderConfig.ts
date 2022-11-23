@@ -1,12 +1,9 @@
 import { SequencerProvider, ProviderInterface } from "starknet";
 
-const NETWORK = process.env.NETWORK || "";
-const RPC_URL = process.env.RPC_URL || "";
-
 export type NetworkName = "goerli-alpha" | "mainnet-alpha";
 
 function getNetworkConfig(): NetworkName {
-  if (NETWORK == "mainnet" || NETWORK == "mainnet-alpha") {
+  if (process.env.NETWORK == "mainnet" || process.env.NETWORK == "mainnet-alpha") {
     return "mainnet-alpha";
   } else {
     return "goerli-alpha";
@@ -14,11 +11,14 @@ function getNetworkConfig(): NetworkName {
 }
 
 export function getProvider(): ProviderInterface {
-  let baseUrl = "http://localhost:5050";
-  if (NETWORK == "devnet") {
-    if (RPC_URL != "") {
-      baseUrl = RPC_URL;
-    }
+  if (process.env.RPC_URL != undefined) {
+    console.log(`Using RPC with URL ${process.env.RPC_URL}`);
+    return new SequencerProvider({
+      baseUrl: `${process.env.RPC_URL}`,
+    });
+  }
+  if (process.env.NETWORK == "devnet") {
+    let baseUrl = "http://localhost:5050";
     console.log(`Using DEVNET with URL ${baseUrl}`);
     return new SequencerProvider({
       baseUrl: `${baseUrl}`,

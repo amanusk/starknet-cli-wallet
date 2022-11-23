@@ -60,6 +60,32 @@ program
     await wallet.transfer(recipientAddress, utils.parseUnits(amount, decimals));
   });
 
+program.command("declare <filename> <classHash>").action(async (filename: string, classHash: string, options) => {
+  let wallet = getWalletFromConfig();
+  await wallet.declareNewContract(filename, classHash);
+});
+
+program
+  .command("deploy <classHash> [constructorArgs...]")
+  .action(async (classHash: string, constructorArgs: string[], options) => {
+    let wallet = getWalletFromConfig();
+    await wallet.deployNewContract(classHash, constructorArgs);
+  });
+
+program
+  .command("invoke <contractAddress>  <selector> [calldata...]")
+  .action(async (contractAddress: string, selector: string, calldata: string[], options) => {
+    let wallet = getWalletFromConfig();
+    await wallet.invoke(contractAddress, selector, calldata);
+  });
+
+program
+  .command("call <contractAddress>  <selector> [calldata...]")
+  .action(async (contractAddress: string, selector: string, calldata: string[], options) => {
+    let wallet = getWalletFromConfig();
+    await wallet.call(contractAddress, selector, calldata);
+  });
+
 program.command("generate_seed").action(async options => {
   StarkNetWallet.generateSeed();
 });
