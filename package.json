@@ -1,7 +1,7 @@
 {
-  "name": "basic-starknet-js-wallet",
+  "name": "starknet-cli-wallet",
   "version": "0.0.1",
-  "description": "Basice example of a wallet implemented with starknetjs",
+  "description": "Example of a starknet wallet implemented with starknetjs",
   "main": "index.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
@@ -18,7 +18,7 @@
     "commander": "^8.2.0",
     "dotenv": "^10.0.0",
     "ethers": "^5.4.7",
-    "starknet": "^4.9.0",
+    "starknet": "^4.12.0",
     "starkscan": "^0.0.6"
   },
   "devDependencies": {

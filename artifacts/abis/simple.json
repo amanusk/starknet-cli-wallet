@@ -1,0 +1,26 @@
+[
+    {
+        "inputs": [],
+        "name": "constructor",
+        "outputs": [],
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "get_counter",
+        "outputs": [
+            {
+                "name": "count",
+                "type": "felt"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "increase_counter",
+        "outputs": [],
+        "type": "function"
+    }
+]

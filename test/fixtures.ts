@@ -3,21 +3,15 @@ import fs from "fs";
 import { Account, ProviderInterface, RpcProvider, SequencerProvider, ec, json, Contract } from "starknet";
 import { CompiledContract, DeployContractPayload } from "starknet";
 import { encodeShortString } from "../src/util";
-
 const readContract = (name: string): CompiledContract =>
   json.parse(fs.readFileSync(`./artifacts/${name}.json`).toString("ascii"));
 
 export const compiledOpenZeppelinAccount = readContract("Account");
-// export const compiledErc20 = readContract("ERC20");
-// export const compiledL1L2 = readContract("l1l2_compiled");
-// export const compiledTypeTransformation = readContract("contract");
-// export const compiledMulticall = readContract("multicall");
-// export const compiledTestDapp = readContract("TestDapp");
 
 const DEFAULT_TEST_PROVIDER_BASE_URL = "http://127.0.0.1:5050/";
 const DEFAULT_TEST_ACCOUNT_ADDRESS = "0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a"; // run `starknet-devnet --seed 0` and this will be the first account
 const DEFAULT_TEST_ACCOUNT_PRIVATE_KEY = "0xe3e70682c2094cac629f6fbed82c07cd";
-const DEFAULT_FEE_TOKEN_ADDRESS = "0x062230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488";
+const DEFAULT_FEE_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
 const BASE_URL = process.env.TEST_PROVIDER_BASE_URL || DEFAULT_TEST_PROVIDER_BASE_URL;
 const RPC_URL = process.env.TEST_RPC_URL;
@@ -74,10 +68,3 @@ export const getERC20FeeContract = (provider: ProviderInterface) => {
   const erc20 = new Contract(erc20ABI, DEFAULT_FEE_TOKEN_ADDRESS, provider);
   return erc20;
 };
-
-// export const getERC20DeployPayload = (recipient: string): DeployContractPayload => {
-//   return {
-//     contract: compiledErc20,
-//     constructorCalldata: [encodeShortString("Token"), encodeShortString("ERC20"), recipient],
-//   };
-// };

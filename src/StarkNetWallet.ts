@@ -1,8 +1,8 @@
 import fs from "fs";
 import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
-import { Wallet, BigNumber } from "ethers";
+import { Wallet, BigNumber, utils } from "ethers";
 import BN from "bn.js";
-import { Contract, ec, json, Account, Provider, uint256, hash, ProviderInterface } from "starknet";
+import { Contract, ec, json, Account, Provider, uint256, hash, ProviderInterface, number } from "starknet";
 
 import { getStarkPair } from "./keyDerivation";
 
@@ -13,15 +13,13 @@ dotenv.config();
 const ACCOUNT_CLASS_HASH = "0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f";
 
 export class StarkNetWallet {
-  private account: Account;
-  public provider: ProviderInterface;
+  public account: Account;
 
   constructor(privateKey: string, provider: ProviderInterface, address?: string) {
-    this.provider = provider;
     if (address == undefined) {
       address = StarkNetWallet.computeAddressFromPk(privateKey);
     }
-    this.account = StarkNetWallet.getAccountFromPk(address, privateKey, this.provider);
+    this.account = StarkNetWallet.getAccountFromPk(address, privateKey, provider);
     return;
   }
 
@@ -57,7 +55,7 @@ export class StarkNetWallet {
       address = StarkNetWallet.computeAddressFromMnemonic(mnemonic, index);
     }
     let newWallet = new StarkNetWallet("0x01", provider);
-    let account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index, newWallet.provider);
+    let account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index, provider);
     newWallet.account = account;
     return newWallet;
   }
@@ -74,7 +72,7 @@ export class StarkNetWallet {
   }
 
   async getBalance(tokenAddress?: string) {
-    return StarkNetWallet.getBalance(this.account.address, this.provider, tokenAddress);
+    return StarkNetWallet.getBalance(this.account.address, this.account, tokenAddress);
   }
 
   static async getBalance(address: string, provider: ProviderInterface, tokenAddress?: string): Promise<BigNumber> {
@@ -88,6 +86,7 @@ export class StarkNetWallet {
     return balanceBigNumber;
   }
 
+  // NOTICE: this method will be deprecated once DEPLOY is not working
   static async deployNewAccount(mnemonic: string, provider: ProviderInterface): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
@@ -128,7 +127,6 @@ export class StarkNetWallet {
   ): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
-    const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
 
     let starkKeyPair = getStarkPair(mnemonic, 0);
 
@@ -139,6 +137,15 @@ export class StarkNetWallet {
     console.log("Future Account Address", futureAccountAddress);
 
     let futureAccount = new Account(provider, futureAccountAddress, starkKeyPair);
+
+    let estimateFee = await futureAccount.estimateAccountDeployFee({
+      classHash: ACCOUNT_CLASS_HASH,
+      constructorCalldata: [starkKeyPub],
+      addressSalt: starkKeyPub,
+      contractAddress: futureAccountAddress,
+    });
+    prettyPrintFee(estimateFee);
+
     let accountResponse = await futureAccount.deployAccount({
       classHash: ACCOUNT_CLASS_HASH,
       constructorCalldata: [starkKeyPub],
@@ -179,7 +186,7 @@ export class StarkNetWallet {
     const transferAmount = new BN(amount.toString());
     let uint256Amount = uint256.bnToUint256(transferAmount);
 
-    let estimateFee = await this.account.estimateFee({
+    let estimateFee = await this.account.estimateInvokeFee({
       contractAddress: tokenAddress,
       entrypoint: "transfer",
       calldata: [recipientAddress, uint256Amount.low, uint256Amount.high],
@@ -197,7 +204,79 @@ export class StarkNetWallet {
       { maxFee: estimateFee.suggestedMaxFee },
     );
     console.log("Awaiting tx ", transferTxHash);
-    await this.provider.waitForTransaction(transferTxHash);
+    await this.account.waitForTransaction(transferTxHash);
     console.log("Tx mined ", transferTxHash);
+  }
+
+  async deployNewContract(classHash: string, constructorArgs: string[]) {
+    // TODO: compute account deploy address
+    const { transaction_hash: txHash } = await this.account.deploy({
+      classHash: classHash,
+      salt: "",
+      unique: false,
+      constructorCalldata: this.toRawCallData(constructorArgs),
+    });
+
+    console.log("Awaiting tx ", txHash);
+    await this.account.waitForTransaction(txHash);
+    console.log("Tx mined ", txHash);
+  }
+
+  async declareNewContract(filename: string, classHash: string) {
+    const compiledContract = json.parse(fs.readFileSync(filename).toString("ascii"));
+
+    let estimateFee = await this.account.estimateDeclareFee({
+      contract: compiledContract,
+      classHash: classHash, // Currently can only be got with python
+    });
+    prettyPrintFee(estimateFee);
+
+    const { transaction_hash: txHash } = await this.account.declare({
+      contract: compiledContract,
+      classHash: classHash, // Currently can only be got with python
+    });
+
+    console.log("Awaiting tx ", txHash);
+    await this.account.waitForTransaction(txHash);
+    console.log("Tx mined ", txHash);
+  }
+
+  async invoke(contractAddress: string, selector: string, calldata: string[]) {
+    let call = {
+      contractAddress: contractAddress,
+      entrypoint: selector,
+      calldata: this.toRawCallData(calldata),
+    };
+
+    let estimateFee = await this.account.estimateInvokeFee(call);
+    prettyPrintFee(estimateFee);
+
+    // alternatively execute by calling the account execute function
+    const { transaction_hash: transferTxHash } = await this.account.execute(
+      call,
+      undefined, // abi
+      { maxFee: estimateFee.suggestedMaxFee },
+    );
+    console.log("Awaiting tx ", transferTxHash);
+    await this.account.waitForTransaction(transferTxHash);
+    console.log("Tx mined ", transferTxHash);
+  }
+
+  async call(contractAddress: string, selector: string, calldata: string[]) {
+    let result = await this.account.callContract({
+      contractAddress: contractAddress,
+      entrypoint: selector,
+      calldata: this.toRawCallData(calldata),
+    });
+    console.log("Result", result);
+  }
+
+  toRawCallData(calldata: string[]): string[] {
+    let rawCallData = new Array<string>();
+
+    for (let c of calldata) {
+      rawCallData.push(BigNumber.from(c).toString());
+    }
+    return rawCallData;
   }
 }
