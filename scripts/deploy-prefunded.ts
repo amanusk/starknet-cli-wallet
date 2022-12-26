@@ -1,3 +1,8 @@
+// Example of a script which:
+// Computes the future address of an account
+// Transfers some funds into the account
+// Deploys the account at the new address with the DEPLOY_ACCOUNT tx
+
 import { StarkNetWallet } from "../src/StarkNetWallet";
 import { getProvider } from "../src/ProviderConfig";
 import { utils } from "ethers";

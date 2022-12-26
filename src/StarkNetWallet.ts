@@ -11,6 +11,7 @@ dotenv.config();
 
 // TODO: calculate this
 const ACCOUNT_CLASS_HASH = "0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f";
+const DEFAULT_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
 export class StarkNetWallet {
   public account: Account;
@@ -77,7 +78,7 @@ export class StarkNetWallet {
 
   static async getBalance(address: string, provider: ProviderInterface, tokenAddress?: string): Promise<BigNumber> {
     if (tokenAddress == null) {
-      tokenAddress = ensureEnvVar("TOKEN_ADDRESS"); // todo: move to config per chain
+      tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
     const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
     const erc20 = new Contract(erc20ABI, tokenAddress, provider);
@@ -177,7 +178,7 @@ export class StarkNetWallet {
 
   async transfer(recipientAddress: string, amount: BigNumber, tokenAddress?: string, decimals: number = 18) {
     if (tokenAddress == null) {
-      tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
+      tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
 
     const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
@@ -247,6 +248,8 @@ export class StarkNetWallet {
       entrypoint: selector,
       calldata: this.toRawCallData(calldata),
     };
+
+    console.log("Call", call);
 
     let estimateFee = await this.account.estimateInvokeFee(call);
     prettyPrintFee(estimateFee);

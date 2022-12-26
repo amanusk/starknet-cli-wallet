@@ -16,6 +16,9 @@ yarn install
 
 ## Testing
 
+To run integrations test with `starknet-devent`, run `starknet-devnet --seed 0` in another terminal.
+Use `starknet-devnet>=0.4.0`
+
 ```
 yarn test
 ```
@@ -38,4 +41,4 @@ Copy the resulting seed, public key and address to an `.env` file
 | ------- | ----- | ------ | ------------------------------------------------------------------ |
 | Mainnet | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |
 | Goerli1 | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |
-| Devnet  | Ether | ETH    | 0x062230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488 |
+| Devnet  | Ether | ETH    | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  |

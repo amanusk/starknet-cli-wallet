@@ -1,3 +1,5 @@
+// Example of a deploy script that will soon be deprecated
+
 import { StarkNetWallet } from "../src/StarkNetWallet";
 import { getProvider } from "../src/ProviderConfig";
 
