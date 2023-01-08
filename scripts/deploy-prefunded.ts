@@ -14,13 +14,13 @@ const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
 async function main() {
   let provider = getProvider();
 
-  if (MNEMONIC == "") {
-    console.log("You must provide MNEMONIC");
-    process.exit();
-  }
+  // if (MNEMONIC == "") {
+  //   console.log("You must provide MNEMONIC");
+  //   process.exit();
+  // }
 
-  // let funderWallet = new StarkNetWallet(PRIVATE_KEY, provider, ACCOUNT_ADDRESS);
-  let funderWallet = StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider);
+  let funderWallet = new StarkNetWallet(PRIVATE_KEY, provider, ACCOUNT_ADDRESS);
+  // let funderWallet = StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider);
 
   let funderBalance = await funderWallet.getBalance();
   console.log("Funder Balance", utils.formatEther(funderBalance));

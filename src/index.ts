@@ -60,9 +60,9 @@ program
     await wallet.transfer(recipientAddress, utils.parseUnits(amount, decimals));
   });
 
-program.command("declare <filename> <classHash>").action(async (filename: string, classHash: string, options) => {
+program.command("declare <filename>").action(async (filename: string, options) => {
   let wallet = getWalletFromConfig();
-  await wallet.declareNewContract(filename, classHash);
+  await wallet.declareNewContract(filename);
 });
 
 program

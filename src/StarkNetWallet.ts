@@ -2,7 +2,7 @@ import fs from "fs";
 import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { Wallet, BigNumber, utils } from "ethers";
 import BN from "bn.js";
-import { Contract, ec, json, Account, Provider, uint256, hash, ProviderInterface, number } from "starknet";
+import { Contract, json, Account, Provider, uint256, hash, ProviderInterface, number, Signer } from "starknet";
 
 import { getStarkPair } from "./keyDerivation";
 
@@ -88,38 +88,38 @@ export class StarkNetWallet {
   }
 
   // NOTICE: this method will be deprecated once DEPLOY is not working
-  static async deployNewAccount(mnemonic: string, provider: ProviderInterface): Promise<Account> {
-    // Deploy the Account contract and wait for it to be verified on StarkNet.
-    console.log("Deployment Tx - Account Contract to StarkNet...");
-    const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
+  // static async deployNewAccount(mnemonic: string, provider: ProviderInterface): Promise<Account> {
+  //   // Deploy the Account contract and wait for it to be verified on StarkNet.
+  //   console.log("Deployment Tx - Account Contract to StarkNet...");
+  //   const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
 
-    let starkKeyPair = getStarkPair(mnemonic, 0);
+  //   let starkKeyPair = getStarkPair(mnemonic, 0);
 
-    let starkKeyPub = ec.getStarkKey(starkKeyPair);
+  //   let starkKeyPub = ec.getStarkKey(starkKeyPair);
 
-    let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
+  //   let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
 
-    console.log("Future Account Address", futureAccountAddress);
+  //   console.log("Future Account Address", futureAccountAddress);
 
-    // TODO: replace with declare/deploy + print future address
-    const accountResponse = await provider.deployContract({
-      contract: compiledOZAccount,
-      constructorCalldata: [starkKeyPub],
-      addressSalt: starkKeyPub,
-    });
-    // Wait for the deployment transaction to be accepted on StarkNet
-    console.log(
-      "Waiting for Tx " + accountResponse.transaction_hash + " to be Accepted on Starknet - OZ Account Deployment...",
-    );
-    await provider.waitForTransaction(accountResponse.transaction_hash);
-    console.log("✨ Account Deployed at " + accountResponse.contract_address + " !!");
-    //Ready to be used !!!
-    console.log(`MNEMONIC=${mnemonic}`);
-    console.log(`PUBLIC_KEY=${starkKeyPub}`);
-    console.log(`ACCOUNT_ADDRESS=${accountResponse.contract_address}`);
-    let account = new Account(provider, accountResponse.contract_address, starkKeyPair);
-    return account;
-  }
+  //   // TODO: replace with declare/deploy + print future address
+  //   const accountResponse = await provider.deployContract({
+  //     contract: compiledOZAccount,
+  //     constructorCalldata: [starkKeyPub],
+  //     addressSalt: starkKeyPub,
+  //   });
+  //   // Wait for the deployment transaction to be accepted on StarkNet
+  //   console.log(
+  //     "Waiting for Tx " + accountResponse.transaction_hash + " to be Accepted on Starknet - OZ Account Deployment...",
+  //   );
+  //   await provider.waitForTransaction(accountResponse.transaction_hash);
+  //   console.log("✨ Account Deployed at " + accountResponse.contract_address + " !!");
+  //   //Ready to be used !!!
+  //   console.log(`MNEMONIC=${mnemonic}`);
+  //   console.log(`PUBLIC_KEY=${starkKeyPub}`);
+  //   console.log(`ACCOUNT_ADDRESS=${accountResponse.contract_address}`);
+  //   let account = new Account(provider, accountResponse.contract_address, starkKeyPair);
+  //   return account;
+  // }
 
   static async deployPrefundedAccount(
     address: string,
@@ -223,18 +223,16 @@ export class StarkNetWallet {
     console.log("Tx mined ", txHash);
   }
 
-  async declareNewContract(filename: string, classHash: string) {
+  async declareNewContract(filename: string) {
     const compiledContract = json.parse(fs.readFileSync(filename).toString("ascii"));
 
     let estimateFee = await this.account.estimateDeclareFee({
       contract: compiledContract,
-      classHash: classHash, // Currently can only be got with python
     });
     prettyPrintFee(estimateFee);
 
     const { transaction_hash: txHash } = await this.account.declare({
       contract: compiledContract,
-      classHash: classHash, // Currently can only be got with python
     });
 
     console.log("Awaiting tx ", txHash);
