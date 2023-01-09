@@ -11,3 +11,4 @@ node.json
 yarn-error.log
 
 venv
+dist*

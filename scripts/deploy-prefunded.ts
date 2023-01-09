@@ -6,6 +6,7 @@
 import { StarkNetWallet } from "../src/StarkNetWallet";
 import { getProvider } from "../src/ProviderConfig";
 import { utils } from "ethers";
+import { BN } from "bn.js";
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const MNEMONIC = process.env.MNEMONIC || "";
@@ -23,22 +24,23 @@ async function main() {
   // let funderWallet = StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider);
 
   let funderBalance = await funderWallet.getBalance();
-  console.log("Funder Balance", utils.formatEther(funderBalance));
+  // console.log("Funder Balance", utils.formatEther(funderBalance));
+  console.log("Funder Balance", funderBalance);
 
   let newMnemonic = StarkNetWallet.generateSeed();
   let futureAddress = StarkNetWallet.computeAddressFromMnemonic(newMnemonic);
   console.log(`Future Address ${futureAddress}`);
 
-  let amount = utils.parseEther("0.005");
+  let amount = new BN(utils.parseEther("0.005").toString());
   await funderWallet.transfer(futureAddress, amount);
 
   let newAccountBalance = await StarkNetWallet.getBalance(futureAddress, provider);
-  console.log("Funded Balance", utils.formatEther(newAccountBalance));
+  console.log("Funded Balance", newAccountBalance);
 
   await StarkNetWallet.deployPrefundedAccount(futureAddress, newMnemonic, provider);
 
   newAccountBalance = await StarkNetWallet.getBalance(futureAddress, provider);
-  console.log("Funded Balance After Deploy", utils.formatEther(newAccountBalance));
+  console.log("Funded Balance After Deploy", newAccountBalance);
 }
 
 main();

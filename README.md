@@ -41,4 +41,4 @@ Copy the resulting seed, public key and address to an `.env` file
 | ------- | ----- | ------ | ------------------------------------------------------------------ |
 | Mainnet | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |
 | Goerli1 | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |
-| Devnet  | Ether | ETH    | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  |
+| Devnet  | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |

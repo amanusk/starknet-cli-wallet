@@ -2,9 +2,11 @@ import fs from "fs";
 import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { Wallet, BigNumber, utils } from "ethers";
 import BN from "bn.js";
-import { Contract, json, Account, Provider, uint256, hash, ProviderInterface, number, Signer } from "starknet";
+import { Contract, json, Account, Provider, uint256, hash, ProviderInterface, Signer } from "starknet";
 
-import { getStarkPair } from "./keyDerivation";
+import { getPublicKey, getStarkKey, pedersen, sign, verify } from "@noble/curves/stark";
+
+import { getStarkPk } from "./keyDerivation";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -29,20 +31,18 @@ export class StarkNetWallet {
   }
 
   static computeAddressFromMnemonic(mnemonic: string, index = 0): string {
-    const starkKeyPair = getStarkPair(mnemonic, index);
-    let starkKeyPub = ec.getStarkKey(starkKeyPair);
+    const starkPk = getStarkPk(mnemonic, index);
+    let starkKeyPub = getStarkKey(starkPk);
     return hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
   }
 
   static computeAddressFromPk(pk: string): string {
-    const starkKeyPair = ec.getKeyPair(pk);
-    let starkKeyPub = ec.getStarkKey(starkKeyPair);
+    let starkKeyPub = getStarkKey(pk);
     return hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
   }
 
   static getAccountFromPk(address: string, pk: string, provider: ProviderInterface): Account {
-    const starkKeyPair = ec.getKeyPair(pk);
-    let account = new Account(provider, address, starkKeyPair);
+    let account = new Account(provider, address, pk);
     return account;
   }
 
@@ -67,8 +67,8 @@ export class StarkNetWallet {
     index: number = 0,
     provider: ProviderInterface,
   ): Account {
-    const starkKeyPair = getStarkPair(mnemonic, index);
-    let account = new Account(provider, address, starkKeyPair);
+    const starkPk = getStarkPk(mnemonic, index);
+    let account = new Account(provider, address, starkPk);
     return account;
   }
 
@@ -93,9 +93,9 @@ export class StarkNetWallet {
   //   console.log("Deployment Tx - Account Contract to StarkNet...");
   //   const compiledOZAccount = json.parse(fs.readFileSync("./artifacts/Account.json").toString("ascii"));
 
-  //   let starkKeyPair = getStarkPair(mnemonic, 0);
+  //   let starkPk = getStarkPair(mnemonic, 0);
 
-  //   let starkKeyPub = ec.getStarkKey(starkKeyPair);
+  //   let starkKeyPub = ec.getStarkKey(starkPk);
 
   //   let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
 
@@ -117,7 +117,7 @@ export class StarkNetWallet {
   //   console.log(`MNEMONIC=${mnemonic}`);
   //   console.log(`PUBLIC_KEY=${starkKeyPub}`);
   //   console.log(`ACCOUNT_ADDRESS=${accountResponse.contract_address}`);
-  //   let account = new Account(provider, accountResponse.contract_address, starkKeyPair);
+  //   let account = new Account(provider, accountResponse.contract_address, starkPk);
   //   return account;
   // }
 
@@ -129,15 +129,16 @@ export class StarkNetWallet {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
 
-    let starkKeyPair = getStarkPair(mnemonic, 0);
+    let starkPk = getStarkPk(mnemonic, 0);
 
-    let starkKeyPub = ec.getStarkKey(starkKeyPair);
+    let starkKeyPub = getStarkKey(starkPk);
 
     let futureAccountAddress = hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
 
     console.log("Future Account Address", futureAccountAddress);
 
-    let futureAccount = new Account(provider, futureAccountAddress, starkKeyPair);
+    console.log("StarkPk", starkPk);
+    let futureAccount = new Account(provider, futureAccountAddress, starkPk);
 
     let estimateFee = await futureAccount.estimateAccountDeployFee({
       classHash: ACCOUNT_CLASS_HASH,
@@ -176,16 +177,17 @@ export class StarkNetWallet {
     return pk;
   }
 
-  async transfer(recipientAddress: string, amount: BigNumber, tokenAddress?: string, decimals: number = 18) {
+  async transfer(recipientAddress: string, amount: BN, tokenAddress?: string, decimals: number = 18) {
     if (tokenAddress == null) {
       tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
 
     const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
     const erc20 = new Contract(erc20ABI, tokenAddress, this.account);
+    console.log("Amount", amount.toNumber());
 
-    const transferAmount = new BN(amount.toString());
-    let uint256Amount = uint256.bnToUint256(transferAmount);
+    let uint256Amount = uint256.bnToUint256(amount.toNumber());
+    console.log("uint amount", uint256Amount, uint256Amount.high, uint256Amount.low);
 
     let estimateFee = await this.account.estimateInvokeFee({
       contractAddress: tokenAddress,
