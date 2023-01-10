@@ -30,11 +30,11 @@ program.command("balance [address] [token_address]").action(async (address: stri
     let wallet = getWalletFromConfig();
     let balanceBigNumber = await wallet.getBalance(tokenAddress);
     console.log(`Address ${wallet.getAddress()}`);
-    console.log(`Balance ${utils.formatEther(balanceBigNumber)}`);
+    console.log(`Balance ${utils.formatEther(balanceBigNumber.toString())}`);
   } else {
     let balanceBigNumber = await StarkNetWallet.getBalance(address, provider, tokenAddress);
     console.log(`Address ${address}`);
-    console.log(`Balance ${utils.formatEther(balanceBigNumber)}`);
+    console.log(`Balance ${utils.formatEther(balanceBigNumber.toString())}`);
   }
 });
 
@@ -57,7 +57,7 @@ program
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
     }
     let wallet = getWalletFromConfig();
-    await wallet.transfer(recipientAddress, utils.parseUnits(amount, decimals));
+    await wallet.transfer(recipientAddress, utils.parseUnits(amount, decimals).toBigInt());
   });
 
 program.command("declare <filename>").action(async (filename: string, options) => {

@@ -1,8 +1,7 @@
 import fs from "fs";
 import { ensureEnvVar, uint256ToBigNumber, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
-import { Wallet, BigNumber, utils } from "ethers";
-import BN from "bn.js";
-import { Contract, json, Account, Provider, uint256, hash, ProviderInterface, Signer } from "starknet";
+import { Wallet, BigNumber } from "ethers";
+import { Contract, json, Account, Provider, uint256, hash, ProviderInterface, Signer, number } from "starknet";
 
 import { getPublicKey, getStarkKey, pedersen, sign, verify } from "@noble/curves/stark";
 
@@ -76,14 +75,14 @@ export class StarkNetWallet {
     return StarkNetWallet.getBalance(this.account.address, this.account, tokenAddress);
   }
 
-  static async getBalance(address: string, provider: ProviderInterface, tokenAddress?: string): Promise<BigNumber> {
+  static async getBalance(address: string, provider: ProviderInterface, tokenAddress?: string): Promise<BigInt> {
     if (tokenAddress == null) {
       tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
     const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
     const erc20 = new Contract(erc20ABI, tokenAddress, provider);
     const balance = await erc20.balanceOf(address);
-    let balanceBigNumber = uint256ToBigNumber(balance.balance);
+    let balanceBigNumber = uint256.uint256ToBN(balance.balance);
     return balanceBigNumber;
   }
 
@@ -177,16 +176,16 @@ export class StarkNetWallet {
     return pk;
   }
 
-  async transfer(recipientAddress: string, amount: BN, tokenAddress?: string, decimals: number = 18) {
+  async transfer(recipientAddress: string, amount: BigInt, tokenAddress?: string, decimals: number = 18) {
     if (tokenAddress == null) {
       tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
 
     const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
     const erc20 = new Contract(erc20ABI, tokenAddress, this.account);
-    console.log("Amount", amount.toNumber());
+    console.log("Amount", amount, "AmountString", amount.toString(), "Value", amount.valueOf());
 
-    let uint256Amount = uint256.bnToUint256(amount.toNumber());
+    let uint256Amount = uint256.bnToUint256(amount.valueOf());
     console.log("uint amount", uint256Amount, uint256Amount.high, uint256Amount.low);
 
     let estimateFee = await this.account.estimateInvokeFee({

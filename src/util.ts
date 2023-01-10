@@ -1,6 +1,5 @@
 import { BigNumber, BigNumberish, constants, utils } from "ethers";
 import { EstimateFee, encode } from "starknet";
-import BN from "bn.js";
 
 export function ensureEnvVar(varName: string): string {
   if (!process.env[varName]) {
@@ -12,9 +11,9 @@ export function ensureEnvVar(varName: string): string {
 // Represents an integer in the range [0, 2^256).
 export interface Uint256 {
   // The low 128 bits of the value.
-  low: BN;
+  low: BigInt;
   // The high 128 bits of the value.
-  high: BN;
+  high: BigInt;
 }
 
 /**
@@ -35,8 +34,8 @@ export function uint256ToBigNumber(uint256: Uint256) {
 // function to convert BN to Uint256
 export function bigNumberToUint256(bignumber: BigNumber): Uint256 {
   return {
-    low: new BN(bignumber.mask(128).toHexString()),
-    high: new BN(bignumber.shr(128).toHexString()),
+    low: BigInt(bignumber.mask(128).toHexString()),
+    high: BigInt(bignumber.shr(128).toHexString()),
   };
 }
 
