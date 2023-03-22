@@ -183,10 +183,8 @@ export class StarkNetWallet {
 
     const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
     const erc20 = new Contract(erc20ABI, tokenAddress, this.account);
-    console.log("Amount", amount, "AmountString", amount.toString(), "Value", amount.valueOf());
 
     let uint256Amount = uint256.bnToUint256(amount.valueOf());
-    console.log("uint amount", uint256Amount, uint256Amount.high, uint256Amount.low);
 
     let estimateFee = await this.account.estimateInvokeFee({
       contractAddress: tokenAddress,
@@ -224,21 +222,23 @@ export class StarkNetWallet {
     console.log("Tx mined ", txHash);
   }
 
-  async declareNewContract(filename: string) {
+  async declareNewContract(filename: string, classHash?: string) {
     const compiledContract = json.parse(fs.readFileSync(filename).toString("ascii"));
 
     let estimateFee = await this.account.estimateDeclareFee({
       contract: compiledContract,
+      classHash,
     });
     prettyPrintFee(estimateFee);
 
-    const { transaction_hash: txHash } = await this.account.declare({
+    const { transaction_hash: txHash, class_hash: classHashResult } = await this.account.declare({
       contract: compiledContract,
+      classHash,
     });
 
     console.log("Awaiting tx ", txHash);
     await this.account.waitForTransaction(txHash);
-    console.log("Tx mined ", txHash);
+    console.log("Tx mined ", txHash, "Declared class", classHashResult);
   }
 
   async invoke(contractAddress: string, selector: string, calldata: string[]) {

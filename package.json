@@ -19,7 +19,7 @@
     "commander": "^8.2.0",
     "dotenv": "^10.0.0",
     "ethers": "^5.4.7",
-    "starknet": "5.0.0-beta.1",
+    "starknet": "5.0.0-beta.2",
     "starkscan": "^0.0.9"
   },
   "devDependencies": {

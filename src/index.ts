@@ -60,10 +60,13 @@ program
     await wallet.transfer(recipientAddress, utils.parseUnits(amount, decimals).toBigInt());
   });
 
-program.command("declare <filename>").action(async (filename: string, options) => {
-  let wallet = getWalletFromConfig();
-  await wallet.declareNewContract(filename);
-});
+program
+  .command("declare <filename>")
+  .option("-ch --class_hash <classHash>")
+  .action(async (filename: string, options) => {
+    let wallet = getWalletFromConfig();
+    await wallet.declareNewContract(filename, options.classHash);
+  });
 
 program
   .command("deploy <classHash> [constructorArgs...]")
