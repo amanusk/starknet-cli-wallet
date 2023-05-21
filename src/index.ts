@@ -1,7 +1,7 @@
 import { ensureEnvVar } from "./util";
 import { program } from "commander";
-import { utils } from "ethers";
 import { getProvider } from "./ProviderConfig";
+import { ethers } from "ethers";
 
 import { StarkNetWallet } from "./StarkNetWallet";
 
@@ -12,12 +12,25 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const MNEMONIC = process.env.MNEMONIC || "";
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
 
+// goerli by default
+const STARKNET_RPC_URL = process.env.STARKNET_RPC_URL || "https://alpha4.starknet.io";
+
 function getWalletFromConfig(): StarkNetWallet {
-  let provider = getProvider();
+  let accountAddress = ACCOUNT_ADDRESS;
+  if (ACCOUNT_ADDRESS == undefined) {
+    if (PRIVATE_KEY != "") {
+      accountAddress = StarkNetWallet.computeAddressFromPk(PRIVATE_KEY);
+    }
+    if (MNEMONIC != "") {
+      accountAddress = StarkNetWallet.computeAddressFromMnemonic(MNEMONIC);
+    }
+  }
+  console.log("Account Address: ", accountAddress);
+  let provider = getProvider(STARKNET_RPC_URL);
   if (PRIVATE_KEY != "") {
-    return new StarkNetWallet(PRIVATE_KEY, provider, ACCOUNT_ADDRESS);
+    return new StarkNetWallet(PRIVATE_KEY, provider, accountAddress);
   } else if (MNEMONIC != "") {
-    return StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider, ACCOUNT_ADDRESS);
+    return StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider, accountAddress);
   } else {
     let mnemonic = StarkNetWallet.generateSeed();
     return StarkNetWallet.fromMnemonic(mnemonic, 0, provider);
@@ -25,16 +38,16 @@ function getWalletFromConfig(): StarkNetWallet {
 }
 
 program.command("balance [address] [token_address]").action(async (address: string, tokenAddress: string, options) => {
-  let provider = getProvider();
+  let provider = getProvider(STARKNET_RPC_URL);
   if (address == undefined) {
     let wallet = getWalletFromConfig();
     let balanceBigNumber = await wallet.getBalance(tokenAddress);
     console.log(`Address ${wallet.getAddress()}`);
-    console.log(`Balance ${utils.formatEther(balanceBigNumber.toString())}`);
+    console.log(`Balance ${ethers.formatEther(balanceBigNumber.toString())}`);
   } else {
     let balanceBigNumber = await StarkNetWallet.getBalance(address, provider, tokenAddress);
     console.log(`Address ${address}`);
-    console.log(`Balance ${utils.formatEther(balanceBigNumber.toString())}`);
+    console.log(`Balance ${ethers.formatEther(balanceBigNumber.toString())}`);
   }
 });
 
@@ -57,7 +70,7 @@ program
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
     }
     let wallet = getWalletFromConfig();
-    await wallet.transfer(recipientAddress, utils.parseUnits(amount, decimals).toBigInt());
+    await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
   });
 
 program
@@ -74,6 +87,11 @@ program
     let wallet = getWalletFromConfig();
     await wallet.deployNewContract(classHash, constructorArgs);
   });
+
+program.command("deploy_account").action(async (classHash: string, constructorArgs: string[], options) => {
+  let wallet = getWalletFromConfig();
+  await wallet.deployAccount();
+});
 
 program
   .command("invoke <contractAddress>  <selector> [calldata...]")
@@ -100,6 +118,13 @@ program.command("generate_pk").action(async options => {
 program.command("address").action(async options => {
   let wallet = getWalletFromConfig();
   console.log(`Account address: ${wallet.getAddress()}`);
+});
+
+program.command("get_keys").action(async options => {
+  let wallet = getWalletFromConfig();
+  console.log(`Account address: ${wallet.getAddress()}`);
+  console.log(`Account PrivateKey: ${wallet.getPrivateKey()}`);
+  console.log(`Account PublicKey: ${await wallet.getPublicKey()}`);
 });
 
 program.parse(process.argv);

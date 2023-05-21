@@ -1,7 +1,7 @@
 import fs from "fs";
 
 import { Account, ProviderInterface, RpcProvider, SequencerProvider, ec, json, Contract } from "starknet";
-import { CompiledContract, DeployContractPayload } from "starknet";
+import { CompiledContract, DeployContractPayload, waitForTransactionOptions } from "starknet";
 import { encodeShortString } from "../src/util";
 const readContract = (name: string): CompiledContract =>
   json.parse(fs.readFileSync(`./artifacts/${name}.json`).toString("ascii"));
@@ -29,8 +29,8 @@ export const getTestProvider = (): ProviderInterface => {
   if (IS_DEVNET) {
     // accelerate the tests when running locally
     const originalWaitForTransaction = provider.waitForTransaction.bind(provider);
-    provider.waitForTransaction = (txHash: string, retryInterval: number) => {
-      return originalWaitForTransaction(txHash, retryInterval || 1000);
+    provider.waitForTransaction = (txHash: string, { retryInterval }: waitForTransactionOptions = {}) => {
+      return originalWaitForTransaction(txHash, { retryInterval: retryInterval || 1000 });
     };
   }
 
@@ -55,7 +55,7 @@ export const getTestAccount = (provider: ProviderInterface) => {
     testAccountPrivateKey = DEFAULT_TEST_ACCOUNT_PRIVATE_KEY;
   }
 
-  return new Account(provider, testAccountAddress, ec.getKeyPair(testAccountPrivateKey));
+  return new Account(provider, testAccountAddress, testAccountPrivateKey);
 };
 
 const describeIf = (condition: boolean) => (condition ? describe : describe.skip);

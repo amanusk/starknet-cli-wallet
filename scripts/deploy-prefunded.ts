@@ -5,7 +5,7 @@
 
 import { StarkNetWallet } from "../src/StarkNetWallet";
 import { getProvider } from "../src/ProviderConfig";
-import { utils } from "ethers";
+import { ethers } from "ethers";
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const MNEMONIC = process.env.MNEMONIC || "";
@@ -30,7 +30,7 @@ async function main() {
   let futureAddress = StarkNetWallet.computeAddressFromMnemonic(newMnemonic);
   console.log(`Future Address ${futureAddress}`);
 
-  let amount = utils.parseEther("0.005").toBigInt();
+  let amount = ethers.parseEther("0.005").toBigInt();
   console.log("Transfering amount", amount);
   await funderWallet.transfer(futureAddress, amount);
 

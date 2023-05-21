@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, constants, utils } from "ethers";
+import { ethers } from "ethers";
 import { EstimateFee, encode } from "starknet";
 
 export function ensureEnvVar(varName: string): string {
@@ -26,38 +26,25 @@ function adaptAddress(address: string) {
   return "0x" + BigInt(address).toString(16);
 }
 
-// function to convert Uint256 to BN
-export function uint256ToBigNumber(uint256: Uint256) {
-  return BigNumber.from(uint256.high.toString()).shl(128).add(BigNumber.from(uint256.low.toString()));
-}
-
-// function to convert BN to Uint256
-export function bigNumberToUint256(bignumber: BigNumber): Uint256 {
-  return {
-    low: BigInt(bignumber.mask(128).toHexString()),
-    high: BigInt(bignumber.shr(128).toHexString()),
-  };
-}
-
 export function generateRandomStarkPrivateKey(length = 63) {
   const characters = "0123456789ABCDEF";
   let result = "0x";
   for (let i = 0; i < length; ++i) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
-  return BigNumber.from(result);
+  return BigInt(result);
 }
 
 export function prettyPrintFee(fee: EstimateFee) {
-  console.log(`Overall Fee: ${utils.formatEther(fee.overall_fee.toString())}`);
+  console.log(`Overall Fee: ${ethers.formatEther(fee.overall_fee.toString())}`);
   if (fee.gas_consumed !== undefined) {
     console.log(`Gas Consumed: ${fee.gas_consumed.toString()}`);
   }
   if (fee.gas_price !== undefined) {
-    console.log(`Gas Price: ${utils.formatUnits(fee.gas_price.toString(), 9)}`);
+    console.log(`Gas Price: ${ethers.formatUnits(fee.gas_price.toString(), 9)}`);
   }
   if (fee.suggestedMaxFee !== undefined) {
-    console.log(`Suggested Max Fee: ${utils.formatEther(fee.suggestedMaxFee.toString())}`);
+    console.log(`Suggested Max Fee: ${ethers.formatEther(fee.suggestedMaxFee.toString())}`);
   }
 }
 
