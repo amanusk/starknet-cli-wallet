@@ -11,6 +11,7 @@ dotenv.config();
 // TODO: calculate this
 const ACCOUNT_CLASS_HASH = "0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f";
 const DEFAULT_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+const UDC_ADDRESS = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
 export class StarkNetWallet {
   public account: Account;
@@ -175,14 +176,24 @@ export class StarkNetWallet {
     console.log("Tx mined ", transferTxHash);
   }
 
-  async deployNewContract(classHash: string, constructorArgs: string[]) {
-    // TODO: compute account deploy address
-    const { transaction_hash: txHash } = await this.account.deploy({
+  async deploy(classHash: string, salt: string, unique: boolean, constructorArgs: string[]) {
+    let estimateFee = await this.account.estimateDeployFee({
       classHash: classHash,
-      salt: "",
-      unique: false,
-      constructorCalldata: this.toRawCallData(constructorArgs),
+      salt: salt,
+      unique: unique,
+      constructorCalldata: constructorArgs.length > 0 ? this.toRawCallData(constructorArgs) : undefined,
     });
+    prettyPrintFee(estimateFee);
+
+    const { transaction_hash: txHash } = await this.account.deploy(
+      {
+        classHash: classHash,
+        salt: salt,
+        unique: unique,
+        constructorCalldata: constructorArgs.length > 0 ? this.toRawCallData(constructorArgs) : undefined,
+      },
+      { maxFee: (estimateFee.suggestedMaxFee * 112n) / 100n },
+    );
 
     console.log("Awaiting tx ", txHash);
     await this.account.waitForTransaction(txHash);

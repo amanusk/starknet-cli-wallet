@@ -82,10 +82,11 @@ program
   });
 
 program
-  .command("deploy <classHash> [constructorArgs...]")
-  .action(async (classHash: string, constructorArgs: string[], options) => {
+  .command("deploy <classHash> <salt> [constructorArgs...]")
+  .option("-u --unique")
+  .action(async (classHash: string, salt: string, constructorArgs: string[], options) => {
     let wallet = getWalletFromConfig();
-    await wallet.deployNewContract(classHash, constructorArgs);
+    await wallet.deploy(classHash, salt, options.unique, constructorArgs);
   });
 
 program.command("deploy_account").action(async (classHash: string, constructorArgs: string[], options) => {
