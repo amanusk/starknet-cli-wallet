@@ -161,7 +161,6 @@ export class StarkNetWallet {
     });
     prettyPrintFee(estimateFee);
 
-    // alternatively execute by calling the account execute function
     const { transaction_hash: transferTxHash } = await this.account.execute(
       {
         contractAddress: tokenAddress,
@@ -200,18 +199,25 @@ export class StarkNetWallet {
     console.log("Tx mined ", txHash);
   }
 
-  async declareNewContract(filename: string, classHash?: string) {
+  async declareNewContract(filename: string, classHash?: string, casmFilename?: string, compiledClassHash?: string) {
     const compiledContract = json.parse(fs.readFileSync(filename).toString("ascii"));
+
+    let casmContarct = undefined;
+    if (casmFilename != null) {
+      casmContarct = json.parse(fs.readFileSync(casmFilename).toString("ascii"));
+    }
 
     let estimateFee = await this.account.estimateDeclareFee({
       contract: compiledContract,
       classHash,
+      casm: casmContarct,
     });
     prettyPrintFee(estimateFee);
 
     const { transaction_hash: txHash, class_hash: classHashResult } = await this.account.declare({
       contract: compiledContract,
       classHash,
+      casm: casmContarct,
     });
 
     console.log("Awaiting tx ", txHash);

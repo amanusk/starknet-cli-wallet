@@ -20,7 +20,7 @@
     "dotenv": "^10.0.0",
     "ethers": "^6.3.0",
     "micro-starknet": "^0.2.3",
-    "starknet": "^5.10.1",
+    "starknet": "^5.13.0",
     "starkscan": "^0.0.9"
   },
   "devDependencies": {

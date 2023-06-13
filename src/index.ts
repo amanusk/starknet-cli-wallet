@@ -74,11 +74,12 @@ program
   });
 
 program
-  .command("declare <filename>")
+  .command("declare <filename> [casm_filename]")
   .option("-ch --class_hash <classHash>")
-  .action(async (filename: string, options) => {
+  .option("-cch --compiled_class_hash <compiledClassHash>")
+  .action(async (filename: string, casm_filename: string, options) => {
     let wallet = getWalletFromConfig();
-    await wallet.declareNewContract(filename, options.classHash);
+    await wallet.declareNewContract(filename, options.classHash, casm_filename, options.compiledClassHash);
   });
 
 program
