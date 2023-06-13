@@ -14,10 +14,23 @@ The tool supports:
 yarn install
 ```
 
+## Supported features
+
+- generate seed
+- print address
+- deploy account at address
+- get balance
+- transfer (ETH by default)
+- declare contract
+- declare cairo 1 contract
+- deploy contract via UDC
+- invoke contract
+- call contract
+
 ## Testing
 
 To run integrations test with `starknet-devent`, run `starknet-devnet --seed 0` in another terminal.
-Use `starknet-devnet>=0.4.0`
+Use `starknet-devnet>=0.5.3`
 
 ```
 yarn test
@@ -25,20 +38,12 @@ yarn test
 
 More testing is required
 
-## Deploy account contract
-
-This repo comes with some basic scripts as examples to interact with the library
-
-```
-ts-node ./scripts/deploy.ts
-```
-
 Copy the resulting seed, public key and address to an `.env` file
+
+## .env file
+
+See example .env file for how to configure the wallet
 
 ## Fee Token Addresses
 
-|         | Name  | Symbol | Address                                                            |
-| ------- | ----- | ------ | ------------------------------------------------------------------ |
-| Mainnet | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |
-| Goerli1 | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |
-| Devnet  | Ether | ETH    | 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 |
+The fee token accorss all networks is ETH 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7

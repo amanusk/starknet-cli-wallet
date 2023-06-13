@@ -12,10 +12,7 @@
   "author": "amanusk",
   "license": "MIT",
   "dependencies": {
-    "@noble/curves": "^1.0.0",
-    "@types/bn.js": "^5.1.1",
     "@types/commander": "^2.12.2",
-    "bn.js": "^5.2.1",
     "commander": "^8.2.0",
     "dotenv": "^10.0.0",
     "ethers": "^6.3.0",
