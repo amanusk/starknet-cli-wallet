@@ -39,6 +39,7 @@ function getWalletFromConfig(): StarkNetWallet {
 
 program.command("balance [address] [token_address]").action(async (address: string, tokenAddress: string, options) => {
   let provider = getProvider(STARKNET_RPC_URL);
+  let res = provider.getInvokeEstimateFee;
   if (address == undefined) {
     let wallet = getWalletFromConfig();
     let balanceBigNumber = await wallet.getBalance(tokenAddress);

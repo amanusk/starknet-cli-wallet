@@ -8,6 +8,10 @@ import { getStarkPk, getPubKey } from "./keyDerivation";
 import * as dotenv from "dotenv";
 dotenv.config();
 
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // TODO: calculate this
 const ACCOUNT_CLASS_HASH = "0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f";
 const DEFAULT_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
@@ -168,7 +172,7 @@ export class StarkNetWallet {
         calldata: [recipientAddress, uint256Amount.low, uint256Amount.high],
       },
       undefined, // abi
-      { maxFee: estimateFee.suggestedMaxFee },
+      { maxFee: estimateFee.suggestedMaxFee * 3n },
     );
     console.log("Awaiting tx ", transferTxHash);
     await this.account.waitForTransaction(transferTxHash);
@@ -214,11 +218,14 @@ export class StarkNetWallet {
     });
     prettyPrintFee(estimateFee);
 
-    const { transaction_hash: txHash, class_hash: classHashResult } = await this.account.declare({
-      contract: compiledContract,
-      classHash,
-      casm: casmContarct,
-    });
+    const { transaction_hash: txHash, class_hash: classHashResult } = await this.account.declare(
+      {
+        contract: compiledContract,
+        classHash,
+        casm: casmContarct,
+      },
+      { maxFee: estimateFee.suggestedMaxFee * 5n },
+    );
 
     console.log("Awaiting tx ", txHash);
     await this.account.waitForTransaction(txHash);
@@ -241,7 +248,7 @@ export class StarkNetWallet {
     const { transaction_hash: transferTxHash } = await this.account.execute(
       call,
       undefined, // abi
-      { maxFee: estimateFee.suggestedMaxFee },
+      { maxFee: estimateFee.suggestedMaxFee * 2n },
     );
     console.log("Awaiting tx ", transferTxHash);
     await this.account.waitForTransaction(transferTxHash);
