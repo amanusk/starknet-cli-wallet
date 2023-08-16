@@ -75,6 +75,28 @@ program
   });
 
 program
+  .command("transfer2 <recipientAddress> <amount>")
+  .option("-t --token <tokenAddress>")
+  .option("-d --decimals <decimals>")
+  .action(async (recipientAddress: string, amount: string, options) => {
+    if (recipientAddress == null) {
+      console.warn("Must specify a destination address to trasnfer to");
+    }
+
+    let decimals = 18;
+    if (options.decimals == null) {
+      decimals = options.decimals;
+    }
+
+    let tokenAddress = options.tokenAddress;
+    if (tokenAddress == null) {
+      tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
+    }
+    let wallet = getWalletFromConfig();
+    await wallet.transfer2(recipientAddress, ethers.parseUnits(amount, decimals));
+  });
+
+program
   .command("declare <filename> [casm_filename]")
   .option("-ch --class_hash <classHash>")
   .option("-cch --compiled_class_hash <compiledClassHash>")

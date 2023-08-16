@@ -1,7 +1,19 @@
 import fs from "fs";
 import { ensureEnvVar, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { ethers, Wallet } from "ethers";
-import { Contract, json, Account, Provider, uint256, hash, ProviderInterface, Signer, number } from "starknet";
+import {
+  Calldata,
+  cairo,
+  Contract,
+  json,
+  Account,
+  Provider,
+  uint256,
+  hash,
+  ProviderInterface,
+  Signer,
+  number,
+} from "starknet";
 
 import { getStarkPk, getPubKey } from "./keyDerivation";
 
@@ -173,6 +185,38 @@ export class StarkNetWallet {
       },
       undefined, // abi
       { maxFee: estimateFee.suggestedMaxFee * 3n },
+    );
+    console.log("Awaiting tx ", transferTxHash);
+    await this.account.waitForTransaction(transferTxHash);
+    console.log("Tx mined ", transferTxHash);
+  }
+
+  async transfer2(recipientAddress: string, amount: BigInt, tokenAddress?: string, decimals: number = 18) {
+    if (tokenAddress == null) {
+      tokenAddress = DEFAULT_TOKEN_ADDRESS;
+    }
+
+    const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
+    const erc20 = new Contract(erc20ABI, tokenAddress, this.account);
+
+    let uint256Amount = uint256.bnToUint256(amount.valueOf());
+
+    const transferCall = {
+      contractAddress: tokenAddress,
+      entrypoint: "transfer",
+      calldata: {
+        recipient: recipientAddress,
+        amount: cairo.uint256(100000n),
+      },
+    };
+
+    let estimateFee = await this.account.estimateInvokeFee([transferCall, transferCall]);
+    prettyPrintFee(estimateFee);
+
+    const { transaction_hash: transferTxHash } = await this.account.execute(
+      [transferCall, transferCall],
+      undefined, // abi
+      { maxFee: estimateFee.suggestedMaxFee * 2n },
     );
     console.log("Awaiting tx ", transferTxHash);
     await this.account.waitForTransaction(transferTxHash);
