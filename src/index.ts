@@ -54,7 +54,7 @@ program.command("balance [address] [token_address]").action(async (address: stri
 
 program
   .command("transfer <recipientAddress> <amount>")
-  .option("-t --token <tokenAddress>")
+  .option("-t --token <token>")
   .option("-d --decimals <decimals>")
   .action(async (recipientAddress: string, amount: string, options) => {
     if (recipientAddress == null) {
@@ -65,13 +65,13 @@ program
     if (options.decimals == null) {
       decimals = options.decimals;
     }
-
-    let tokenAddress = options.tokenAddress;
+    let tokenAddress = options.token;
     if (tokenAddress == null) {
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
     }
     let wallet = getWalletFromConfig();
-    await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
+    console.log(`Transfering ${amount} tokens ${tokenAddress} to ${recipientAddress}`);
+    await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals), tokenAddress);
   });
 
 program

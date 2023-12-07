@@ -1,7 +1,7 @@
 import fs from "fs";
 import { ensureEnvVar, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { ethers, Wallet } from "ethers";
-import { Contract, json, Account, Provider, uint256, hash, ProviderInterface, Signer, number } from "starknet";
+import { Contract, json, Account, uint256, hash, ProviderInterface } from "starknet";
 
 import { getStarkPk, getPubKey } from "./keyDerivation";
 
@@ -144,7 +144,8 @@ export class StarkNetWallet {
 
   static generatePk(): BigInt {
     let pk = generateRandomStarkPrivateKey();
-    console.log("PK generated", pk);
+    console.log("PrivateKey generated", pk.toString());
+    // console.log("PublicKey generated", getPubKey(pk.toString("hex")));
     return pk;
   }
 
