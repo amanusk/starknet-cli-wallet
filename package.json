@@ -13,11 +13,12 @@
   "license": "MIT",
   "dependencies": {
     "@types/commander": "^2.12.2",
+    "abi-wan-kanabi": "^2.0.0",
     "commander": "^8.2.0",
     "dotenv": "^10.0.0",
     "ethers": "^6.3.0",
     "micro-starknet": "^0.2.3",
-    "starknet": "^5.24.4",
+    "starknet": "^5.24.5",
     "starkscan": "^0.0.9"
   },
   "devDependencies": {
