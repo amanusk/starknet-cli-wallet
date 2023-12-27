@@ -18,7 +18,7 @@
     "dotenv": "^10.0.0",
     "ethers": "^6.3.0",
     "micro-starknet": "^0.2.3",
-    "starknet": "^5.24.5",
+    "starknet": "../SDKs/starknet.js",
     "starkscan": "^0.0.9"
   },
   "devDependencies": {
