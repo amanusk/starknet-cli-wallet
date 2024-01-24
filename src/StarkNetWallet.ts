@@ -86,7 +86,7 @@ export class StarkNetWallet {
     provider: ProviderInterface,
   ): Account {
     const starkPk = getStarkPk(mnemonic, index);
-    let account = new Account(provider, address, starkPk);
+    let account = new Account(provider, address, starkPk, "1", RPC.ETransactionVersion.V3);
     return account;
   }
 
@@ -155,6 +155,7 @@ export class StarkNetWallet {
   }
 
   async transfer(recipientAddress: string, amount: BigInt, tokenAddress?: string, decimals: number = 18) {
+    console.log(this.account);
     if (tokenAddress == null) {
       tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
