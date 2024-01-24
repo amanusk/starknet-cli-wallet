@@ -1,7 +1,7 @@
 import fs from "fs";
 import { ensureEnvVar, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { ethers, Wallet } from "ethers";
-import { Contract, json, Account, uint256, hash, ProviderInterface } from "starknet";
+import { Contract, json, Account, uint256, hash, ProviderInterface, RPC } from "starknet";
 
 import { getStarkPk, getPubKey } from "./keyDerivation";
 
@@ -59,7 +59,7 @@ export class StarkNetWallet {
   }
 
   static getAccountFromPk(address: string, pk: string, provider: ProviderInterface): Account {
-    let account = new Account(provider, address, pk);
+    let account = new Account(provider, address, pk, "1", RPC.ETransactionVersion.V3);
     return account;
   }
 
@@ -194,7 +194,7 @@ export class StarkNetWallet {
     });
     prettyPrintFee(estimateFee);
 
-    const { transaction_hash: txHash } = await this.account.deploy(
+    let res = await this.account.deployContract(
       {
         classHash: classHash,
         salt: salt,
@@ -203,10 +203,12 @@ export class StarkNetWallet {
       },
       { maxFee: (estimateFee.suggestedMaxFee * 112n) / 100n },
     );
+    let txHash = res.transaction_hash;
 
     console.log("Awaiting tx ", txHash);
     await this.account.waitForTransaction(txHash);
     console.log("Tx mined ", txHash);
+    console.log("Deployed contract", res.contract_address);
   }
 
   async declareNewContract(filename: string, classHash?: string, casmFilename?: string, compiledClassHash?: string) {
