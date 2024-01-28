@@ -18,7 +18,10 @@ function delay(ms: number) {
 // Cairo 0
 // const ACCOUNT_CLASS_HASH = "0x05c478ee27f2112411f86f207605b2e2c58cdb647bac0df27f660ef2252359c6";
 // New Cairo
-const ACCOUNT_CLASS_HASH = "0x00903752516de5c04fe91600ca6891e325278b2dfc54880ae11a809abb364844";
+// const ACCOUNT_CLASS_HASH = "0x00903752516de5c04fe91600ca6891e325278b2dfc54880ae11a809abb364844";
+
+// OZ 0.8.1
+const ACCOUNT_CLASS_HASH = "0x61dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 const DEFAULT_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 const UDC_ADDRESS = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
@@ -171,6 +174,7 @@ export class StarkNetWallet {
       calldata: [recipientAddress, uint256Amount.low, uint256Amount.high],
     });
     prettyPrintFee(estimateFee);
+    console.log(estimateFee);
 
     const { transaction_hash: transferTxHash } = await this.account.execute(
       {
