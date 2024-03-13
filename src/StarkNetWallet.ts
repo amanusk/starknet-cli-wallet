@@ -18,10 +18,11 @@ function delay(ms: number) {
 // Cairo 0
 // const ACCOUNT_CLASS_HASH = "0x05c478ee27f2112411f86f207605b2e2c58cdb647bac0df27f660ef2252359c6";
 // New Cairo
-// const ACCOUNT_CLASS_HASH = "0x00903752516de5c04fe91600ca6891e325278b2dfc54880ae11a809abb364844";
+// const ACCOUNT_CLASS_HASH = "0x61dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
+// Default to Cairo 1
+const ACCOUNT_CLASS_HASH =
+  process.env.ACCOUNT_CLASS_HASH || "0x000903752516de5c04fe91600ca6891e325278b2dfc54880ae11a809abb364844";
 
-// OZ 0.8.1
-const ACCOUNT_CLASS_HASH = "0x61dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 const DEFAULT_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 const UDC_ADDRESS = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
@@ -52,18 +53,24 @@ export class StarkNetWallet {
 
   static computeAddressFromMnemonic(mnemonic: string, index = 0): string {
     const starkPk = getStarkPk(mnemonic, index);
-    let starkKeyPub = getPubKey(starkPk);
-    return hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
+    return this.computeAddressFromPk(starkPk);
   }
 
   static computeAddressFromPk(pk: string): string {
     let starkKeyPub = getPubKey(pk);
-    return hash.calculateContractAddressFromHash(starkKeyPub, ACCOUNT_CLASS_HASH, [starkKeyPub], 0);
+    let accountClassHash = BigInt(ACCOUNT_CLASS_HASH);
+    return hash.calculateContractAddressFromHash(starkKeyPub, accountClassHash, [starkKeyPub], 0);
   }
 
-  static getAccountFromPk(address: string, pk: string, provider: ProviderInterface): Account {
-    let account = new Account(provider, address, pk, "1", RPC.ETransactionVersion.V3);
-    return account;
+  static getAccountFromPk(address: string, pk: string, provider: ProviderInterface, txVersion = 2): Account {
+    if (txVersion == 2) {
+      return new Account(provider, address, pk, "1", RPC.ETransactionVersion.V2);
+    } else if (txVersion == 3) {
+      return new Account(provider, address, pk, "1", RPC.ETransactionVersion.V3);
+    } else {
+      console.log("Unsupported account version");
+      process.exit(0);
+    }
   }
 
   static fromMnemonic(
@@ -71,13 +78,14 @@ export class StarkNetWallet {
     index: number = 0,
     provider: ProviderInterface,
     address?: string,
+    txVersion = 2,
   ): StarkNetWallet {
     if (address == undefined) {
       address = StarkNetWallet.computeAddressFromMnemonic(mnemonic, index);
     }
     const starkPk = getStarkPk(mnemonic, index);
     let newWallet = new StarkNetWallet(starkPk, provider);
-    let account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index, provider);
+    let account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index, provider, txVersion);
     newWallet.account = account;
     return newWallet;
   }
@@ -87,10 +95,10 @@ export class StarkNetWallet {
     mnemonic: string,
     index: number = 0,
     provider: ProviderInterface,
+    txVersion = 2,
   ): Account {
     const starkPk = getStarkPk(mnemonic, index);
-    let account = new Account(provider, address, starkPk, "1", RPC.ETransactionVersion.V3);
-    return account;
+    return this.getAccountFromPk(address, starkPk, provider, txVersion);
   }
 
   async getBalance(tokenAddress?: string) {
