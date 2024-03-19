@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 // import { KeyPair, ec, number } from "starknet";
-import { getStarkKey, utils, grindKey } from "micro-starknet";
+import { getStarkKey, utils, grindKey } from "@scure/starknet";
 
 export const baseDerivationPath = "m/44'/9004'/0'/0";
 
