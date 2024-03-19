@@ -1,6 +1,6 @@
 import fs from "fs";
 
-import { Account, ProviderInterface, RpcProvider, SequencerProvider, ec, json, Contract } from "starknet";
+import { Account, ProviderInterface, RpcProvider, ec, json, Contract } from "starknet";
 import { CompiledContract, DeployContractPayload, waitForTransactionOptions } from "starknet";
 import { encodeShortString } from "../src/util";
 const readContract = (name: string): CompiledContract =>
