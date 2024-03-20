@@ -7,6 +7,7 @@ The tool supports:
 - Deterministic address derivation for StarkNet contract given a seed phrase and class hash
 - Generate a new seed and deploy a contract to a predefined address
 - At default works with the latest trialed-and-tested OZ contract
+- Set any contract class in .env file
 
 ## Installation
 
@@ -30,7 +31,7 @@ yarn install
 ## Testing
 
 To run integrations test with `starknet-devent`, run `starknet-devnet --seed 0` in another terminal.
-Use `starknet-devnet>=0.5.3`
+Use `starknet-devnet-rs`
 
 ```
 yarn test
@@ -43,7 +44,3 @@ Copy the resulting seed, public key and address to an `.env` file
 ## .env file
 
 See example .env file for how to configure the wallet
-
-## Fee Token Addresses
-
-The fee token accorss all networks is ETH 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
