@@ -3,7 +3,7 @@ import { program } from "commander";
 import { getProvider } from "./ProviderConfig";
 import { ethers } from "ethers";
 
-import { StarkNetWallet } from "./StarkNetWallet";
+import { StarkNetWallet, DEFAULT_STRK_ADDRESS, DEFAULT_TOKEN_ADDRESS } from "./StarkNetWallet";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -37,20 +37,29 @@ function getWalletFromConfig(txVersion = 2): StarkNetWallet {
   }
 }
 
-program.command("balance [address] [token_address]").action(async (address: string, tokenAddress: string, options) => {
-  let provider = getProvider(STARKNET_RPC_URL);
-  let res = provider.getInvokeEstimateFee;
-  if (address == undefined) {
-    let wallet = getWalletFromConfig();
-    let balanceBigNumber = await wallet.getBalance(tokenAddress);
-    console.log(`Address ${wallet.getAddress()}`);
-    console.log(`Balance ${ethers.formatEther(balanceBigNumber.toString())}`);
-  } else {
-    let balanceBigNumber = await StarkNetWallet.getBalance(address, provider, tokenAddress);
-    console.log(`Address ${address}`);
-    console.log(`Balance ${ethers.formatEther(balanceBigNumber.toString())}`);
-  }
-});
+program
+  .command("balance [address] [token_address]")
+  .option("-t --token <token>")
+  .action(async (address: string, tokenAddress: string, options) => {
+    let provider = getProvider(STARKNET_RPC_URL);
+    let res = provider.getInvokeEstimateFee;
+    if (address == undefined) {
+      let wallet = getWalletFromConfig();
+      address = wallet.getAddress();
+    }
+    if (options.token == undefined) {
+      let balanceEth = await StarkNetWallet.getBalance(address, provider, DEFAULT_TOKEN_ADDRESS);
+      let balanceStrk = await StarkNetWallet.getBalance(address, provider, DEFAULT_STRK_ADDRESS);
+      console.log(`Address ${address}`);
+      console.log(`Eth Balance ${ethers.formatEther(balanceEth.toString())}`);
+      console.log(`Strk Balance ${ethers.formatEther(balanceStrk.toString())}`);
+    } else {
+      let balanceEth = await StarkNetWallet.getBalance(address, provider, options.token);
+      console.log(`Address ${address}`);
+      console.log(`Token ${options.token}`);
+      console.log(`Balance ${ethers.formatEther(balanceEth.toString())}`);
+    }
+  });
 
 program
   .command("transfer <recipientAddress> <amount>")
