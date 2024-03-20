@@ -1,7 +1,19 @@
 import fs from "fs";
 import { ensureEnvVar, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { ethers, Wallet } from "ethers";
-import { Contract, json, Account, uint256, hash, ProviderInterface, RPC } from "starknet";
+import {
+  Contract,
+  json,
+  Account,
+  Uint256,
+  uint256,
+  hash,
+  ProviderInterface,
+  RPC,
+  Provider,
+  Call,
+  cairo,
+} from "starknet";
 
 import { getStarkPk, getPubKey } from "./keyDerivation";
 
@@ -30,11 +42,11 @@ export class StarkNetWallet {
   public account: Account;
   private privateKey: string;
 
-  constructor(privateKey: string, provider: ProviderInterface, address?: string) {
+  constructor(privateKey: string, provider: ProviderInterface, address?: string, txVersion = 2) {
     if (address == undefined) {
       address = StarkNetWallet.computeAddressFromPk(privateKey);
     }
-    this.account = StarkNetWallet.getAccountFromPk(address, privateKey, provider);
+    this.account = StarkNetWallet.getAccountFromPk(address, privateKey, provider, txVersion);
     this.privateKey = privateKey;
     return;
   }
@@ -90,6 +102,12 @@ export class StarkNetWallet {
     return newWallet;
   }
 
+  static getERC20Contract(tokenAddress: string, provider: ProviderInterface): Contract {
+    const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
+    const erc20 = new Contract(erc20ABI, tokenAddress, provider);
+    return erc20;
+  }
+
   static getAccountFromMnemonic(
     address: string,
     mnemonic: string,
@@ -109,8 +127,7 @@ export class StarkNetWallet {
     if (tokenAddress == null) {
       tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
-    const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
-    const erc20 = new Contract(erc20ABI, tokenAddress, provider);
+    let erc20 = this.getERC20Contract(tokenAddress, provider);
     const balance = await erc20.balanceOf(address);
     let balanceBigNumber = uint256.uint256ToBN(balance.balance);
     return balanceBigNumber;
@@ -142,6 +159,8 @@ export class StarkNetWallet {
     console.log(
       "Waiting for Tx " + accountResponse.transaction_hash + " to be Accepted on Starknet - OZ Account Deployment...",
     );
+    await this.account.waitForTransaction(accountResponse.transaction_hash);
+    console.log("Deployed account at", accountResponse.contract_address);
 
     return this.account;
   }
@@ -166,30 +185,22 @@ export class StarkNetWallet {
   }
 
   async transfer(recipientAddress: string, amount: BigInt, tokenAddress?: string, decimals: number = 18) {
-    console.log(this.account);
     if (tokenAddress == null) {
       tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
 
-    const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
-    const erc20 = new Contract(erc20ABI, tokenAddress, this.account);
-
-    let uint256Amount = uint256.bnToUint256(amount.valueOf());
-
-    let estimateFee = await this.account.estimateInvokeFee({
-      contractAddress: tokenAddress,
-      entrypoint: "transfer",
-      calldata: [recipientAddress, uint256Amount.low, uint256Amount.high],
+    let erc20 = StarkNetWallet.getERC20Contract(tokenAddress, this.account);
+    let transferTk: Uint256 = cairo.uint256(amount.valueOf());
+    let transferCall: Call = erc20.populate("transfer", {
+      recipient: recipientAddress,
+      amount: transferTk,
     });
+
+    let estimateFee = await this.account.estimateInvokeFee(transferCall);
     prettyPrintFee(estimateFee);
-    console.log(estimateFee);
 
     const { transaction_hash: transferTxHash } = await this.account.execute(
-      {
-        contractAddress: tokenAddress,
-        entrypoint: "transfer",
-        calldata: [recipientAddress, uint256Amount.low, uint256Amount.high],
-      },
+      transferCall,
       undefined, // abi
       { maxFee: estimateFee.suggestedMaxFee * 3n },
     );
@@ -259,8 +270,6 @@ export class StarkNetWallet {
       entrypoint: selector,
       calldata: this.toRawCallData(calldata),
     };
-
-    console.log("Call", call);
 
     let estimateFee = await this.account.estimateInvokeFee(call);
     prettyPrintFee(estimateFee);

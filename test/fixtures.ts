@@ -2,7 +2,7 @@ import fs from "fs";
 
 import { Account, ProviderInterface, RpcProvider, ec, json, Contract } from "starknet";
 import { CompiledContract, waitForTransactionOptions } from "starknet";
-import { encodeShortString } from "../src/util";
+import { StarkNetWallet } from "../src/StarkNetWallet";
 const readContract = (name: string): CompiledContract =>
   json.parse(fs.readFileSync(`./artifacts/${name}.json`).toString("ascii"));
 
@@ -54,6 +54,28 @@ export const getTestAccount = (provider: ProviderInterface) => {
   }
 
   return new Account(provider, testAccountAddress, testAccountPrivateKey);
+};
+
+// test account with fee token balance
+export const getStarknetWallet = (provider: ProviderInterface) => {
+  let testAccountAddress = process.env.TEST_ACCOUNT_ADDRESS ?? DEFAULT_TEST_ACCOUNT_ADDRESS;
+  let testAccountPrivateKey = process.env.TEST_ACCOUNT_PRIVATE_KEY ?? DEFAULT_TEST_ACCOUNT_PRIVATE_KEY;
+
+  if (!IS_DEVNET) {
+    console.log("Not devnet!!");
+    if (!testAccountPrivateKey) {
+      throw new Error("TEST_ACCOUNT_PRIVATE_KEY is not set");
+    }
+
+    if (!testAccountAddress) {
+      throw new Error("TEST_ACCOUNT_ADDRESS is not set");
+    }
+  } else {
+    testAccountAddress = DEFAULT_TEST_ACCOUNT_ADDRESS;
+    testAccountPrivateKey = DEFAULT_TEST_ACCOUNT_PRIVATE_KEY;
+  }
+
+  return new StarkNetWallet(testAccountPrivateKey, provider, testAccountAddress);
 };
 
 const describeIf = (condition: boolean) => (condition ? describe : describe.skip);

@@ -1,31 +1,29 @@
 import { isBN } from "bn.js";
 import chai from "chai";
-// import typedDataExample from "../__mocks__/typedDataExample.json";
-import { Account, Contract, Provider, stark } from "starknet";
-// import { feeTransactionVersion } from "../src/utils/hash";
-// import { toBN } from "../src/utils/number";
-import { getERC20FeeContract, getTestAccount, getTestProvider } from "./fixtures";
+import { Account, Contract, constants } from "starknet";
+import { getERC20FeeContract, getStarknetWallet, getTestProvider } from "./fixtures";
+import { StarkNetWallet } from "../src/StarkNetWallet";
 
 const { expect } = chai;
+const ADDRESS_ONE = "0x00000000000000000000000000000000000000000000000000000000000000001";
 
 describe("deploy and test Wallet", () => {
   const provider = getTestProvider();
-  const account = getTestAccount(provider);
+  const account = getStarknetWallet(provider);
   let erc20: Contract;
   let erc20Address: string;
   let dapp: Contract;
 
   beforeEach(async () => {
-    expect(account).to.be.instanceof(Account);
-
+    expect(account).to.be.instanceof(StarkNetWallet);
     erc20 = getERC20FeeContract(provider);
-
     erc20Address = erc20.address;
-
-    it("reads balance of wallet", async () => {
-      const x = await erc20.balanceOf(account.address);
-
-      expect(BigInt(x[0].low)).to.be.equal(BigInt("1000000000000000000000"));
-    }).timeout(100000);
   });
+
+  it("Checks transfer", async function () {
+    await account.transfer(ADDRESS_ONE, 10n);
+    let x = await erc20.balanceOf(ADDRESS_ONE);
+    console.log(x);
+    expect(x.balance.low).to.be.equal(10n);
+  }).timeout(100000);
 });

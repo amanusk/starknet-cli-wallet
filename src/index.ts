@@ -12,10 +12,10 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const MNEMONIC = process.env.MNEMONIC || "";
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
 
-// goerli by default
-const STARKNET_RPC_URL = process.env.STARKNET_RPC_URL || "https://alpha4.starknet.io";
+// sepolia  by default
+const STARKNET_RPC_URL = process.env.STARKNET_RPC_URL || "https://starknet-sepolia.public.blastapi.io/rpc/v0_6";
 
-function getWalletFromConfig(): StarkNetWallet {
+function getWalletFromConfig(txVersion = 2): StarkNetWallet {
   let accountAddress = ACCOUNT_ADDRESS;
   if (ACCOUNT_ADDRESS == undefined) {
     if (PRIVATE_KEY != "") {
@@ -28,9 +28,9 @@ function getWalletFromConfig(): StarkNetWallet {
   console.log("Account Address: ", accountAddress);
   let provider = getProvider(STARKNET_RPC_URL);
   if (PRIVATE_KEY != "") {
-    return new StarkNetWallet(PRIVATE_KEY, provider, accountAddress);
+    return new StarkNetWallet(PRIVATE_KEY, provider, accountAddress, txVersion);
   } else if (MNEMONIC != "") {
-    return StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider, accountAddress);
+    return StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider, accountAddress, txVersion);
   } else {
     let mnemonic = StarkNetWallet.generateSeed();
     return StarkNetWallet.fromMnemonic(mnemonic, 0, provider);
@@ -56,6 +56,7 @@ program
   .command("transfer <recipientAddress> <amount>")
   .option("-t --token <token>")
   .option("-d --decimals <decimals>")
+  .option("-v3 --v3")
   .action(async (recipientAddress: string, amount: string, options) => {
     if (recipientAddress == null) {
       console.warn("Must specify a destination address to trasnfer to");
@@ -69,9 +70,15 @@ program
     if (tokenAddress == null) {
       tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
     }
-    let wallet = getWalletFromConfig();
-    console.log(`Transfering ${amount} tokens ${tokenAddress} to ${recipientAddress}`);
-    await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals), tokenAddress);
+    if (options.v3) {
+      let wallet = getWalletFromConfig(3);
+      console.log(`Transfering ${amount} tokens ${tokenAddress} to ${recipientAddress}`);
+      await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals), tokenAddress);
+    } else {
+      let wallet = getWalletFromConfig(2);
+      console.log(`Transfering ${amount} tokens ${tokenAddress} to ${recipientAddress}`);
+      await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals), tokenAddress);
+    }
   });
 
 program
