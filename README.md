@@ -37,10 +37,16 @@ Use `starknet-devnet-rs`
 yarn test
 ```
 
-More testing is required
-
 Copy the resulting seed, public key and address to an `.env` file
 
 ## .env file
 
 See example .env file for how to configure the wallet
+
+## Running
+
+Run help for options
+
+```
+ts-node ./src/index.ts --help
+```

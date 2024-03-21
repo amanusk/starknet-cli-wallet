@@ -1,5 +1,5 @@
 import fs from "fs";
-import { ensureEnvVar, generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
+import { generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
 import { ethers, Wallet } from "ethers";
 import {
   Contract,
@@ -23,8 +23,6 @@ dotenv.config();
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-export const UDC_ADDRESS = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
 export class StarkNetWallet {
   public account: Account;

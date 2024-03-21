@@ -41,7 +41,11 @@ describe("deploy and test Wallet", () => {
 
   it("Checks deploy account", async function () {
     let mnemonic = "test test test test test test test test test test test junk";
-    let newWallet = StarkNetWallet.fromMnemonic(mnemonic, 0, provider);
-    let expectedAddress = StarkNetWallet.computeAddressFromMnemonic;
+    let expectedAddress = StarkNetWallet.computeAddressFromMnemonic(mnemonic, ACCOUNT_CLASS_HASH);
+    let newWallet = StarkNetWallet.fromMnemonic(mnemonic, 0, provider, expectedAddress);
+    await account.transfer(expectedAddress, 1000000000000000000n, DEFAULT_TOKEN_ADDRESS);
+    await newWallet.deployAccount(ACCOUNT_CLASS_HASH);
+    let c = await provider.getClassAt(expectedAddress);
+    expect(c).to.be.equal(ACCOUNT_CLASS_HASH);
   }).timeout(100000);
 });
