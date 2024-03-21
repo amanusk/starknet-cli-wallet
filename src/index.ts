@@ -3,7 +3,9 @@ import { program } from "commander";
 import { getProvider } from "./ProviderConfig";
 import { ethers } from "ethers";
 
-import { StarkNetWallet, DEFAULT_STRK_ADDRESS, DEFAULT_TOKEN_ADDRESS } from "./StarkNetWallet";
+import { StarkNetWallet } from "./StarkNetWallet";
+export const DEFAULT_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+export const DEFAULT_STRK_ADDRESS = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -15,22 +17,27 @@ const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
 // sepolia  by default
 const STARKNET_RPC_URL = process.env.STARKNET_RPC_URL || "https://starknet-sepolia.public.blastapi.io/rpc/v0_6";
 
+// Default class hash
+const ACCOUNT_CLASS_HASH =
+  process.env.ACCOUNT_CLASS_HASH || "0x000903752516de5c04fe91600ca6891e325278b2dfc54880ae11a809abb364844";
+
 function getWalletFromConfig(txVersion = 2): StarkNetWallet {
   let accountAddress = ACCOUNT_ADDRESS;
+  console.log("Account Class Hash", ACCOUNT_CLASS_HASH);
   if (ACCOUNT_ADDRESS == undefined) {
     if (PRIVATE_KEY != "") {
-      accountAddress = StarkNetWallet.computeAddressFromPk(PRIVATE_KEY);
+      accountAddress = StarkNetWallet.computeAddressFromPk(PRIVATE_KEY, ACCOUNT_CLASS_HASH);
     }
     if (MNEMONIC != "") {
-      accountAddress = StarkNetWallet.computeAddressFromMnemonic(MNEMONIC);
+      accountAddress = StarkNetWallet.computeAddressFromMnemonic(MNEMONIC, ACCOUNT_CLASS_HASH);
     }
   }
   console.log("Account Address: ", accountAddress);
   let provider = getProvider(STARKNET_RPC_URL);
   if (PRIVATE_KEY != "") {
-    return new StarkNetWallet(PRIVATE_KEY, provider, accountAddress, txVersion);
+    return new StarkNetWallet(PRIVATE_KEY, provider, accountAddress, ACCOUNT_CLASS_HASH, txVersion);
   } else if (MNEMONIC != "") {
-    return StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider, accountAddress, txVersion);
+    return StarkNetWallet.fromMnemonic(MNEMONIC, 0, provider, accountAddress, ACCOUNT_CLASS_HASH, txVersion);
   } else {
     let mnemonic = StarkNetWallet.generateSeed();
     return StarkNetWallet.fromMnemonic(mnemonic, 0, provider);
@@ -109,7 +116,7 @@ program
 
 program.command("deploy_account").action(async (classHash: string, constructorArgs: string[], options) => {
   let wallet = getWalletFromConfig();
-  await wallet.deployAccount();
+  await wallet.deployAccount(ACCOUNT_CLASS_HASH);
 });
 
 program

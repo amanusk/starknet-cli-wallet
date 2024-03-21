@@ -24,32 +24,52 @@ function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// TODO: calculate this
-// Cairo 0 Old
-// const ACCOUNT_CLASS_HASH = "0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f";
-// Cairo 0
-// const ACCOUNT_CLASS_HASH = "0x05c478ee27f2112411f86f207605b2e2c58cdb647bac0df27f660ef2252359c6";
-// New Cairo
-// const ACCOUNT_CLASS_HASH = "0x61dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
-// Default to Cairo 1
-const ACCOUNT_CLASS_HASH =
-  process.env.ACCOUNT_CLASS_HASH || "0x000903752516de5c04fe91600ca6891e325278b2dfc54880ae11a809abb364844";
-
-export const DEFAULT_TOKEN_ADDRESS = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
-export const DEFAULT_STRK_ADDRESS = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 export const UDC_ADDRESS = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
 export class StarkNetWallet {
   public account: Account;
   private privateKey: string;
 
-  constructor(privateKey: string, provider: ProviderInterface, address?: string, txVersion = 2) {
+  constructor(
+    privateKey: string,
+    provider: ProviderInterface,
+    address?: string,
+    accountClassHash?: string,
+    txVersion = 2,
+  ) {
+    if (address == undefined && accountClassHash != undefined) {
+      address = StarkNetWallet.computeAddressFromPk(privateKey, accountClassHash);
+    }
+    console.log(address);
     if (address == undefined) {
-      address = StarkNetWallet.computeAddressFromPk(privateKey);
+      console.log("Either address or contract class must be provided");
+      process.exit(1);
     }
     this.account = StarkNetWallet.getAccountFromPk(address, privateKey, provider, txVersion);
     this.privateKey = privateKey;
     return;
+  }
+
+  static fromMnemonic(
+    mnemonic: string,
+    index: number = 0,
+    provider: ProviderInterface,
+    address?: string,
+    accountClassHash?: string,
+    txVersion = 2,
+  ): StarkNetWallet {
+    if (address == undefined && accountClassHash != undefined) {
+      address = StarkNetWallet.computeAddressFromMnemonic(mnemonic, accountClassHash, index);
+    }
+    if (address == undefined) {
+      console.log("Either address or contract class must be provided");
+      process.exit(1);
+    }
+    const starkPk = getStarkPk(mnemonic, index);
+    let newWallet = new StarkNetWallet(starkPk, provider, address);
+    let account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index, provider, txVersion);
+    newWallet.account = account;
+    return newWallet;
   }
 
   getPrivateKey() {
@@ -64,15 +84,14 @@ export class StarkNetWallet {
     return this.account.address;
   }
 
-  static computeAddressFromMnemonic(mnemonic: string, index = 0): string {
+  static computeAddressFromMnemonic(mnemonic: string, accountClassHash: string, index = 0): string {
     const starkPk = getStarkPk(mnemonic, index);
-    return this.computeAddressFromPk(starkPk);
+    return this.computeAddressFromPk(starkPk, accountClassHash);
   }
 
-  static computeAddressFromPk(pk: string): string {
+  static computeAddressFromPk(pk: string, accountClassHash: string): string {
     let starkKeyPub = getPubKey(pk);
-    let accountClassHash = BigInt(ACCOUNT_CLASS_HASH);
-    return hash.calculateContractAddressFromHash(starkKeyPub, accountClassHash, [starkKeyPub], 0);
+    return hash.calculateContractAddressFromHash(starkKeyPub, BigInt(accountClassHash), [starkKeyPub], 0);
   }
 
   static getAccountFromPk(address: string, pk: string, provider: ProviderInterface, txVersion = 2): Account {
@@ -84,23 +103,6 @@ export class StarkNetWallet {
       console.log("Unsupported account version");
       process.exit(0);
     }
-  }
-
-  static fromMnemonic(
-    mnemonic: string,
-    index: number = 0,
-    provider: ProviderInterface,
-    address?: string,
-    txVersion = 2,
-  ): StarkNetWallet {
-    if (address == undefined) {
-      address = StarkNetWallet.computeAddressFromMnemonic(mnemonic, index);
-    }
-    const starkPk = getStarkPk(mnemonic, index);
-    let newWallet = new StarkNetWallet(starkPk, provider);
-    let account = StarkNetWallet.getAccountFromMnemonic(address, mnemonic, index, provider, txVersion);
-    newWallet.account = account;
-    return newWallet;
   }
 
   static getERC20Contract(tokenAddress: string, provider: ProviderInterface): Contract {
@@ -120,29 +122,26 @@ export class StarkNetWallet {
     return this.getAccountFromPk(address, starkPk, provider, txVersion);
   }
 
-  async getBalance(tokenAddress?: string) {
+  async getBalance(tokenAddress: string) {
     return StarkNetWallet.getBalance(this.account.address, this.account, tokenAddress);
   }
 
-  static async getBalance(address: string, provider: ProviderInterface, tokenAddress?: string): Promise<BigInt> {
-    if (tokenAddress == null) {
-      tokenAddress = DEFAULT_TOKEN_ADDRESS;
-    }
+  static async getBalance(address: string, provider: ProviderInterface, tokenAddress: string): Promise<BigInt> {
     let erc20 = this.getERC20Contract(tokenAddress, provider);
     const balance = await erc20.balanceOf(address);
     let balanceBigNumber = uint256.uint256ToBN(balance.balance);
     return balanceBigNumber;
   }
 
-  async deployAccount(): Promise<Account> {
+  async deployAccount(accountClassHash: string): Promise<Account> {
     // Deploy the Account contract and wait for it to be verified on StarkNet.
     console.log("Deployment Tx - Account Contract to StarkNet...");
 
-    let address = StarkNetWallet.computeAddressFromPk(this.getPrivateKey());
+    let address = StarkNetWallet.computeAddressFromPk(this.getPrivateKey(), accountClassHash);
     console.log("Future Account Address", address);
 
     let estimateFee = await this.account.estimateAccountDeployFee({
-      classHash: ACCOUNT_CLASS_HASH,
+      classHash: accountClassHash,
       constructorCalldata: [await this.account.signer.getPubKey()],
       addressSalt: await this.account.signer.getPubKey(),
       contractAddress: address,
@@ -150,7 +149,7 @@ export class StarkNetWallet {
     prettyPrintFee(estimateFee);
 
     let accountResponse = await this.account.deployAccount({
-      classHash: ACCOUNT_CLASS_HASH,
+      classHash: accountClassHash,
       constructorCalldata: [await this.account.signer.getPubKey()],
       addressSalt: await this.account.signer.getPubKey(),
       contractAddress: address,
@@ -185,11 +184,7 @@ export class StarkNetWallet {
     return pk;
   }
 
-  async transfer(recipientAddress: string, amount: BigInt, tokenAddress?: string, decimals: number = 18) {
-    if (tokenAddress == null) {
-      tokenAddress = DEFAULT_TOKEN_ADDRESS;
-    }
-
+  async transfer(recipientAddress: string, amount: BigInt, tokenAddress: string, decimals: number = 18) {
     let erc20 = StarkNetWallet.getERC20Contract(tokenAddress, this.account);
     let transferTk: Uint256 = cairo.uint256(amount.valueOf());
     let transferCall: Call = erc20.populate("transfer", {
