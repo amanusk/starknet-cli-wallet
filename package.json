@@ -10,7 +10,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "test": "mocha -r ts-node/register test/**",
-    "build": "tsc"
+    "build": "tsc",
+    "semantic-release": "npm publish"
   },
   "author": "amanusk",
   "license": "MIT",
