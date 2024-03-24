@@ -3,6 +3,7 @@ import fs from "fs";
 import { Account, ProviderInterface, RpcProvider, ec, json, Contract } from "starknet";
 import { CompiledContract, waitForTransactionOptions } from "starknet";
 import { StarkNetWallet } from "../src/StarkNetWallet";
+import { ERC20_abi } from "../src/interfaces/ERC20_abi";
 const readContract = (name: string): CompiledContract =>
   json.parse(fs.readFileSync(`./artifacts/${name}.json`).toString("ascii"));
 
@@ -84,7 +85,6 @@ export const describeIfRpc = describeIf(IS_RPC);
 export const describeIfNotDevnet = describeIf(!IS_DEVNET);
 
 export const getERC20FeeContract = (provider: ProviderInterface) => {
-  const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
-  const erc20 = new Contract(erc20ABI, DEFAULT_FEE_TOKEN_ADDRESS, provider);
+  const erc20 = new Contract(ERC20_abi, DEFAULT_FEE_TOKEN_ADDRESS, provider);
   return erc20;
 };

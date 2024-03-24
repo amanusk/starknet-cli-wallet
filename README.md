@@ -1,4 +1,4 @@
-# Basic StarkNet-JS wallet
+# starknet-cli-wallet
 
 I wouldn't trust any software/blockchain/dapp I cannot run from a command line.
 This is a basic tool to run basic commands on a StarkNet contract, from a terminal.

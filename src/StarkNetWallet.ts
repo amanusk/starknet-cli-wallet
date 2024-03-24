@@ -1,5 +1,6 @@
 import fs from "fs";
 import { generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
+import { ERC20_abi } from "./interfaces/ERC20_abi";
 import { ethers, Wallet } from "ethers";
 import {
   Contract,
@@ -104,8 +105,7 @@ export class StarkNetWallet {
   }
 
   static getERC20Contract(tokenAddress: string, provider: ProviderInterface): Contract {
-    const erc20ABI = json.parse(fs.readFileSync("./src/interfaces/ERC20_abi.json").toString("ascii"));
-    const erc20 = new Contract(erc20ABI, tokenAddress, provider);
+    const erc20 = new Contract(ERC20_abi, tokenAddress, provider);
     return erc20;
   }
 
