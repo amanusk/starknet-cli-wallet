@@ -21,6 +21,7 @@
     "starknet": "^6.6.0"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.14",
     "@types/mocha": "^10.0.6",
     "@types/node": "^16.9.2",
     "chai": "^4.3.7",

@@ -1,6 +1,5 @@
-import { isBN } from "bn.js";
 import chai from "chai";
-import { Account, Contract, constants, num } from "starknet";
+import { Contract, num } from "starknet";
 import { getERC20FeeContract, getStarknetWallet, getTestProvider } from "./fixtures";
 import { StarkNetWallet } from "../src/StarkNetWallet";
 
