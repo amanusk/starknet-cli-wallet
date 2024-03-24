@@ -1,6 +1,6 @@
 import { isBN } from "bn.js";
 import chai from "chai";
-import { Account, Contract, constants } from "starknet";
+import { Account, Contract, constants, num } from "starknet";
 import { getERC20FeeContract, getStarknetWallet, getTestProvider } from "./fixtures";
 import { StarkNetWallet } from "../src/StarkNetWallet";
 
@@ -45,7 +45,7 @@ describe("deploy and test Wallet", () => {
     let newWallet = StarkNetWallet.fromMnemonic(mnemonic, 0, provider, expectedAddress);
     await account.transfer(expectedAddress, 1000000000000000000n, DEFAULT_TOKEN_ADDRESS);
     await newWallet.deployAccount(ACCOUNT_CLASS_HASH);
-    let c = await provider.getClassAt(expectedAddress);
-    expect(c).to.be.equal(ACCOUNT_CLASS_HASH);
+    let c = await provider.getClassHashAt(expectedAddress);
+    expect(num.toHex(c)).to.be.equal(ACCOUNT_CLASS_HASH);
   }).timeout(100000);
 });

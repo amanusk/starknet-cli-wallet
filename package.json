@@ -12,15 +12,16 @@
   "author": "amanusk",
   "license": "MIT",
   "dependencies": {
+    "@scure/starknet": "^1.0.0",
     "@types/commander": "^2.12.2",
     "abi-wan-kanabi": "^2.0.0",
     "commander": "^8.2.0",
     "dotenv": "^10.0.0",
     "ethers": "^6.3.0",
-    "@scure/starknet": "^1.0.0",
-    "starknet": "^6.5.0"
+    "starknet": "^6.6.0"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.6",
     "@types/node": "^16.9.2",
     "chai": "^4.3.7",
     "eslint": "^7.32.0",

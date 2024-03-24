@@ -36,14 +36,15 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'yarn' # Caches dependencies to speed up workflows
 
-    - name: Install dependencies
-      run: yarn install # Installs dependencies defined in package.json
-
     - name: Install Devnet
       run: cargo install --locked --git https://github.com/0xSpaceShard/starknet-devnet-rs.git --rev ${{ env.DEVNET_SHA }}
 
     - name: Run Devnet in background
       run: nohup starknet-devnet --seed 0 & sleep 2
+
+
+    - name: Install dependencies
+      run: yarn install # Installs dependencies defined in package.json
 
     - name: Run tests
       run: yarn test # Runs your test script defined in package.json
