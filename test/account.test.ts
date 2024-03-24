@@ -45,6 +45,6 @@ describe("deploy and test Wallet", () => {
     await account.transfer(expectedAddress, 1000000000000000000n, DEFAULT_TOKEN_ADDRESS);
     await newWallet.deployAccount(ACCOUNT_CLASS_HASH);
     let c = await provider.getClassHashAt(expectedAddress);
-    expect(num.toHex(c)).to.be.equal(ACCOUNT_CLASS_HASH);
+    expect(num.toHex(c)).to.be.equal(num.toHex(ACCOUNT_CLASS_HASH));
   }).timeout(100000);
 });
