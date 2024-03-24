@@ -42,8 +42,8 @@ jobs:
     - name: Install Devnet
       run: cargo install --locked --git https://github.com/0xSpaceShard/starknet-devnet-rs.git --rev ${{ env.DEVNET_SHA }}
 
-    - name: Run Devnet
-      run: starknet-devnet --seed 0
+    - name: Run Devnet in background
+      run: nohup starknet-devnet --seed 0 & sleep 2
 
     - name: Run tests
       run: yarn test # Runs your test script defined in package.json
