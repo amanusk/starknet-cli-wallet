@@ -9,5 +9,7 @@ package-lock.json
 node.json
 yarn-error.log
 
+.yarnrc
+
 venv
 dist*

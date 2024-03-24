@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { ensureEnvVar } from "./util";
 import { program } from "commander";
 import { getProvider } from "./ProviderConfig";
