@@ -18,8 +18,7 @@
     "dotenv": "^10.0.0",
     "ethers": "^6.3.0",
     "@scure/starknet": "^1.0.0",
-    "starknet": "^6.5.0",
-    "starkscan": "^0.0.9"
+    "starknet": "^6.5.0"
   },
   "devDependencies": {
     "@types/node": "^16.9.2",
