@@ -1,0 +1,50 @@
+name: Tests
+
+env:
+  DEVNET_SHA: "c6ffb99"
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+
+    # This job runs on Ubuntu-latest, but you can choose other runners if needed
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x] # Define Node.js versions to test against
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - uses: actions/checkout@v3 # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn' # Caches dependencies to speed up workflows
+
+    - name: Install Devnet
+      run: cargo install --locked --git https://github.com/0xSpaceShard/starknet-devnet-rs.git --rev ${{ env.DEVNET_SHA }}
+
+    - name: Run Devnet in background
+      run: nohup starknet-devnet --seed 0 & sleep 2
+
+
+    - name: Install dependencies
+      run: yarn install # Installs dependencies defined in package.json
+
+    - name: Run tests
+      run: yarn test # Runs your test script defined in package.json
