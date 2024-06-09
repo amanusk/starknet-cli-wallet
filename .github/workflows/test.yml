@@ -1,7 +1,7 @@
 name: Tests
 
 env:
-  DEVNET_SHA: "c6ffb99"
+  DEVNET_SHA: "99893eb"
 
 on:
   push:
