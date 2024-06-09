@@ -86,7 +86,7 @@ program
     }
     let tokenAddress = options.token;
     if (tokenAddress == null) {
-      tokenAddress = ensureEnvVar("TOKEN_ADDRESS");
+      tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
     if (options.v3) {
       let wallet = getWalletFromConfig(3);

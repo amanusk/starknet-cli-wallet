@@ -22,7 +22,7 @@
     "commander": "^8.2.0",
     "dotenv": "^10.0.0",
     "ethers": "^6.3.0",
-    "starknet": "^6.6.0"
+    "starknet": "^6.7.0"
   },
   "devDependencies": {
     "@types/chai": "^4.3.14",
