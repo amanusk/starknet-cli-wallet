@@ -1,7 +1,7 @@
 import fs from "fs";
-import { generateRandomStarkPrivateKey, prettyPrintFee } from "./util";
-import { ERC20_abi } from "./interfaces/ERC20_abi";
-import { ethers, Wallet } from "ethers";
+import {generateRandomStarkPrivateKey, prettyPrintFee} from "./util";
+import {ERC20_abi} from "./interfaces/ERC20_abi";
+import {ethers, Wallet} from "ethers";
 import {
   Contract,
   json,
@@ -16,7 +16,7 @@ import {
   cairo,
 } from "starknet";
 
-import { getStarkPk, getPubKey } from "./keyDerivation";
+import {getStarkPk, getPubKey} from "./keyDerivation";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -193,10 +193,10 @@ export class StarkNetWallet {
     let estimateFee = await this.account.estimateInvokeFee(transferCall);
     prettyPrintFee(estimateFee);
 
-    const { transaction_hash: transferTxHash } = await this.account.execute(
+    const {transaction_hash: transferTxHash} = await this.account.execute(
       transferCall,
       undefined, // abi
-      { maxFee: estimateFee.suggestedMaxFee * 3n },
+      {maxFee: estimateFee.suggestedMaxFee * 3n},
     );
     console.log("Awaiting tx ", transferTxHash);
     await this.account.waitForTransaction(transferTxHash);
@@ -219,7 +219,7 @@ export class StarkNetWallet {
         unique: unique,
         constructorCalldata: constructorArgs.length > 0 ? this.toRawCallData(constructorArgs) : undefined,
       },
-      { maxFee: (estimateFee.suggestedMaxFee * 112n) / 100n },
+      {maxFee: (estimateFee.suggestedMaxFee * 112n) / 100n},
     );
     let txHash = res.transaction_hash;
 
@@ -244,13 +244,13 @@ export class StarkNetWallet {
     });
     prettyPrintFee(estimateFee);
 
-    const { transaction_hash: txHash, class_hash: classHashResult } = await this.account.declare(
+    const {transaction_hash: txHash, class_hash: classHashResult} = await this.account.declare(
       {
         contract: compiledContract,
         classHash,
         casm: casmContarct,
       },
-      { maxFee: estimateFee.suggestedMaxFee * 5n },
+      {maxFee: estimateFee.suggestedMaxFee * 5n},
     );
 
     console.log("Awaiting tx ", txHash);
@@ -269,10 +269,10 @@ export class StarkNetWallet {
     prettyPrintFee(estimateFee);
 
     // alternatively execute by calling the account execute function
-    const { transaction_hash: transferTxHash } = await this.account.execute(
+    const {transaction_hash: transferTxHash} = await this.account.execute(
       call,
       undefined, // abi
-      { maxFee: estimateFee.suggestedMaxFee * 2n },
+      {maxFee: estimateFee.suggestedMaxFee * 2n},
     );
     console.log("Awaiting tx ", transferTxHash);
     await this.account.waitForTransaction(transferTxHash);

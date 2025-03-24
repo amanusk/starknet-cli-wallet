@@ -23,7 +23,7 @@ const STARKNET_RPC_URL = process.env.STARKNET_RPC_URL || "https://starknet-sepol
 const ACCOUNT_CLASS_HASH =
   process.env.ACCOUNT_CLASS_HASH || "0x000903752516de5c04fe91600ca6891e325278b2dfc54880ae11a809abb364844";
 
-function getWalletFromConfig(txVersion = 2): StarkNetWallet {
+function getWalletFromConfig(txVersion = 3): StarkNetWallet {
   let accountAddress = ACCOUNT_ADDRESS;
   console.log("Account Class Hash", ACCOUNT_CLASS_HASH);
   if (ACCOUNT_ADDRESS == undefined) {
@@ -74,7 +74,7 @@ program
   .command("transfer <recipientAddress> <amount>")
   .option("-t --token <token>")
   .option("-d --decimals <decimals>")
-  .option("-v3 --v3")
+  .option("-v1 --v1")
   .action(async (recipientAddress: string, amount: string, options) => {
     if (recipientAddress == null) {
       console.warn("Must specify a destination address to trasnfer to");
@@ -88,12 +88,12 @@ program
     if (tokenAddress == null) {
       tokenAddress = DEFAULT_TOKEN_ADDRESS;
     }
-    if (options.v3) {
-      let wallet = getWalletFromConfig(3);
+    if (options.v1) {
+      let wallet = getWalletFromConfig(2);
       console.log(`Transfering ${amount} tokens ${tokenAddress} to ${recipientAddress}`);
       await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals), tokenAddress);
     } else {
-      let wallet = getWalletFromConfig(2);
+      let wallet = getWalletFromConfig();
       console.log(`Transfering ${amount} tokens ${tokenAddress} to ${recipientAddress}`);
       await wallet.transfer(recipientAddress, ethers.parseUnits(amount, decimals), tokenAddress);
     }
